@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
+    <!--<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'">-->
+    <link href="./styles.css" rel="stylesheet">
+    <link href='node_modules/font-awesome/css/font-awesome.min.css' rel="stylesheet">
+    <title>TeleScreen</title>
+  </head>
+  <body>
+      <div id="loading">
+        <img src="loading.gif" alt="少女祈祷中……"><br>
+        <span>少女祈祷中……</span>
+      </div>
+      <div id="about">
+        <h1>TeleScreen</h1>
+        <span class="version"></span><br>
+        <span class="copyright"></span><br>
+        <span class="licence"></span>
+      </div>
+      <script>
+        window.$ = window.jQuery = require('./node_modules/jquery/dist/jquery.min.js');
+      </script>
+      <div id="main-wrapper">
+        <h1 class="title">スタート~</h1>
+        <ul id="main-list">
+          <li>
+            <div id="clock" class="card">
+              <div class="c_time"></div>
+              <div class="c_date">XXXX-XX-XX MON</div>
+            </div>
+        </ul>
+      </div>
+
+    <!--<script src="./node_modules/jquery/dist/jquery.min.js"></script>-->
+    <script src="./renderer.js"></script>
+  </body>
+</html>

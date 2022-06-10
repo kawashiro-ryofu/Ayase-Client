@@ -1,0 +1,19 @@
+{
+  "name": "telescreen-frontend",
+  "version": "0.0.0",
+  "description": "Frontend application of TeleScreen group notify system",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron main.js"
+  },
+  "author": "kawashiro-ryofu",
+  "license": "MPL-2.0",
+  "devDependencies": {
+    "electron": "^17.1.0"
+  },
+  "dependencies": {
+    "font-awesome": "^4.7.0",
+    "jquery": "^3.6.0",
+    "python-shell": "^3.0.1"
+  }
+}
