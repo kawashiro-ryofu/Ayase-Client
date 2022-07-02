@@ -7,6 +7,32 @@ body{
 	color: white;
 }
 
+a{
+	color: white;
+}
+
+input{
+
+	border: solid 2px aqua;
+	outline-style: none;
+	border-radius: 3px;
+	padding: 5px;
+}
+
+input[disabled="disabled"]{
+	border: solid 2px grey;
+	color: grey;
+}
+
+table{
+	display: contents;
+}
+
+hr{
+    border: none;
+    border-top: 4px dotted white;
+}
+
 /* 初始页 */
 
 #loading{
@@ -23,19 +49,6 @@ body{
 #loading span{
 	color: #E85386;
 	font-weight: bolder;
-}
-
-#about{
-	display: block;
-	z-index: 2;
-	position: absolute;
-	height: 20vh;
-	background-color: #E91E63;
-	bottom: 10px;
-	left: 0;
-	right: 0;
-	text-align: center;
-	color: white
 }
 
 /* 主布局 */
@@ -200,5 +213,78 @@ body{
 #read_notic_content{
 	padding-top: 20px;
 	font-size: 130%;
+}
+
+
+/* 导航栏 */
+#navi{
+	padding-left: 2vh;
+    padding-right: 2vh;
+}
+#navi a{
+	margin: 4px;
+	transition: color, .3s;
+}
+#navi a:hover{
+	color: aquamarine;
+}
+
+/* 设置 */
+
+#settings{
+	position: absolute;
+	left: 25vh;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	overflow-x: visible;
+	overflow-y: auto;
+}
+
+#settings-sidebar{
+	position: absolute;
+	background-color: #00000055;
+	top: 0;
+	bottom: 0;
+	width: 20vh;
+}
+
+#settings-sidebar{
+	text-align: center;
+}
+
+#settings-item-list{
+	line-height: 3;
+	font-size: 3vh;
+}
+
+#settings-item-list li{
+	list-style: none;
+	position: absolute;
+	padding: 0.5vh;
+	left: 24px;
+}
+
+#settings-item-list li .settings-itemlnk{
+	text-decoration: none;
+}
+
+.conf{
+	padding-left: 40px;
+}
+
+/* 此项需要修正*/
+
+.info{
+	border: solid 3px;
+    border-color: white;
+    color: white;
+    padding: 10px;
+    width: 40vh;
+}
+
+.info[type="warning"]{
+	border-color: yellow;
+	color: yellow;
 }
 

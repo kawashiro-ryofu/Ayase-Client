@@ -12,16 +12,10 @@ const http = require('http');
 const { now } = require("jquery");
 const fs = require('fs')
 
-console.info(package.name + '\n' + "Version: " + package.version + '\n\n (C) 2022 ' + package.author + '\n' + 'Licenced Under ' + package.license)
-$('#about .version').html('Version: '+ package.version)
-$('#about .copyright').html('© 2022 ' + package.author)
-$('#about .licence').html('Licenced Under ' + package.license)
-
-setTimeout(function(){
-    $('#about').fadeOut()
+setTimeout(async function(){
     $('#loading').fadeOut()
     $('#main-wrapper').fadeIn()
-}, 4000)
+}, 1000)
 
 
 // 内建函数
@@ -82,7 +76,7 @@ function FormatDate(dateobj = new Date(), format = "%Y-%m-%d %a", DOW = ["SUN", 
 
 //  新窗口
 function NewWin(url, args = ""){
-    window.open(url, '_blank', 'minHeight=480,minWidth=640,autoHideMenuBar=true,nodeIntegration=yes' + args)
+    window.open(url, '_blank', 'minHeight=768,minWidth=1024,autoHideMenuBar=true,nodeIntegration=true' + args)
 }
 
 //  去除HTML标签
@@ -114,14 +108,15 @@ function UUID() {
 var noticeBar = []
 
 //      通知：对象
-function Notice(title, content, publisher, description=delHtmlTag(content), pubDate = new Date(), uuid=UUID()){
-    this.title = title;
-    this.content = content;
-    this.description = description; 
-    this.publisher = publisher;
-    this.pubDate = pubDate;
-    this.uuid = uuid;
-    this.id = noticeBar.length
+function Notice(title, content, publisher, level = "D", description=delHtmlTag(content), pubDate = new Date(), uuid=UUID()){
+    this.title = title; /* 标题 */
+    this.content = content; /* 正文 */
+    this.description = description; /* 描述 */ 
+    this.publisher = publisher; /* 发布者 */
+    this.pubDate = pubDate; /* 发布时间 */
+    this.uuid = uuid; /* （远端服务器）UUID */
+    this.level = level; /* 优先级 */
+    this.id = noticeBar.length /* （本机）ID */
     noticeBar[this.id] = this
     //FreshNoticeBar()
 }
@@ -129,57 +124,32 @@ Notice.prototype = {
     read: false,
     // 阅读器
     Read: function(){
-        var readerTemplate = new String();
-        $('[id="' + this.id + '"]').removeClass('unread')
-        fs.readFile('reader.html.template', 'utf-8', (error, data)=>{
-            if(error){
-                throw error;
-            }else{
-                readerTemplate = data
-            }
+        var readerTemplate = require('./templates.js').readerTemplate
 
-            readerTemplate = readerTemplate.replaceAll('{{ title }}', this.title)
-            readerTemplate = readerTemplate.replaceAll('{{ content }}', this.content)
-            readerTemplate = readerTemplate.replaceAll('{{ pubDate }}', FormatDate(this.pubDate, '%Y-%m-%d %H:%M') + '')
-            readerTemplate = readerTemplate.replaceAll('{{ publisher }}', this.publisher)
-            //console.log(readerTemplate)
-            let filename = Math.round(Math.random() * 131072) + '.tmp.html'
-            //console.log(filename)
-            fs.writeFile(filename, readerTemplate, { flag: 'w+' }, (err) => {
-                if (err) throw err;
-                NewWin(filename)
-                setTimeout(function(){
-                    fs.rm(filename, undefined, (err)=>undefined)
-                }, 5000)
-                this.read = true
-            })
-
+        readerTemplate = readerTemplate.replaceAll('{{ title }}', this.title)
+        readerTemplate = readerTemplate.replaceAll('{{ content }}', this.content)
+        readerTemplate = readerTemplate.replaceAll('{{ pubDate }}', FormatDate(this.pubDate, '%Y-%m-%d %H:%M') + '')
+        readerTemplate = readerTemplate.replaceAll('{{ publisher }}', this.publisher)
+        readerTemplate = readerTemplate.replaceAll('{{ level }}', this.level)
+        //console.log(readerTemplate)
+        let filename = Math.round(Math.random() * 131072) + '.tmp.html'
+        //console.log(filename)
+        fs.writeFile(filename, readerTemplate, { flag: 'w+' }, (err) => {
+            if (err) throw err;
+            NewWin(filename)
+            setTimeout(function(){
+                fs.rm(filename, undefined, (err)=>undefined)
+            }, 5000)
+            this.read = true
         })
 
     }
+
 }
 
+
 //      通知：前端模板
-const notifTemplate = '<li>\
-<div class="card notice {{ unread }}" uuid="{{ uuid }}" id="{{ id }}">\
-  <div class="notic_title"><i class="fa fa-bell" aria-hidden="true"></i> {{ title }}</div>\
-  <div class="notic_descr">{{ description }}</div>\
-  <div class="notic_info">\
-    <i class="fa fa-calendar-o" aria-hidden="true"></i><div>{{ pubDate }}</div><br>\
-    <i class="fa fa-user" aria-hidden="true"></i><div>{{ publisher }}</div>\
-  </div>\
-  <div class="notic_view">\
-    <div><i class="fa fa-arrow-left" aria-hidden="true"></i></div>\
-  </div>\
-  <script>\
-    $(\'[uuid="{{ uuid }}"]\').on("click", function(){\
-        $(\'[uuid="{{ uuid }}"] .notic_view\').fadeIn();\
-        setTimeout(function(){$(\'[uuid="{{ uuid }}"] .notic_view\').fadeOut()}, 3000);\
-        noticeBar[{{ id }}].Read()\
-    })\
-  </script>\
-</div>\
-</li>'
+const notifTemplate = require('./templates.js').notifTemplate
 
 //      从模板生成.card .notify片段
 //          notice: Notice对象
@@ -200,9 +170,7 @@ function GenNoticeCard(notice){
 
 //      通知栏刷新：函数
 function FreshNoticeBar(){
-    
-    $('#main-wrapper').slideUp()
-    $('#loading').fadeIn()
+
     $('.notice').remove()
 
     let temporyNoticeBar = []
@@ -227,18 +195,19 @@ function FreshNoticeBar(){
             i = i - 1;
         }
     }
-    setTimeout(function(){
-        temporyNoticeBar.forEach(function(currentValue, index){
-            $('#main-list').append(GenNoticeCard(currentValue, index))
-        })
-    }, 500)
-    lock = setInterval(function(){
-        if($('.notice').length == temporyNoticeBar.length){
-            $('#loading').fadeOut()
-            $('#main-wrapper').slideDown()
-            clearInterval(lock)
-        }
-    },1000)
+    
+    setTimeout(function () {
+        temporyNoticeBar.forEach(function (currentValue, index) {
+            $('#main-list').append(GenNoticeCard(currentValue, index));
+            $('#main-list li .card').slideDown()
+            if(currentValue.level == "A" && currentValue.read == false){
+                currentValue.Read()
+                $('#main-list li [id="' + currentValue.id +'"]').removeClass('unread')
+            }
+        });
+    }, 100)
+
+
 }
 
 // 时钟
@@ -251,6 +220,7 @@ setInterval(
         $('#clock .c_time').html(T)
         $('#clock .c_date').html(D)
 },500)
+
 
 //  #main-wrapper自动回归顶部
 scrollbackflag = false
@@ -265,3 +235,6 @@ document.getElementById('main-list').onscroll = function(){
     }
 }
 
+function settings(){
+    NewWin('settings.html', )
+}

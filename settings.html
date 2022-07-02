@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
+    <!--<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'">-->
+    <link href="./styles.css" rel="stylesheet">
+    <link href='node_modules/font-awesome/css/font-awesome.min.css' rel="stylesheet">
+    <link href='node_modules/remixicon/fonts/remixicon.css' rel="stylesheet">
+	<script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+    <title>{{ title }}</title>
+  </head>
+  <body>
+    <div id="settings-sidebar">
+	  <h1>设置</h1>
+
+      <ul id="settings-item-list">
+        <li><a class="settings-itemlnk" href="#connections" title="连接"><i class="ri-reserved-fill"></i>连接</a></li><br>
+        <li><a class="settings-itemlnk" href="#notifications" title="通知"><i class="ri-notification-4-fill"></i>通知</a></li><br>
+        <!--通用设置-->
+        <!--扩展-->
+        <li><a class="settings-itemlnk"  href="#about" title="关于"><i class="ri-information-fill"></i>关于</a></li>
+      </ul>
+    </div>
+    <div id="settings">
+		<!--连接-->
+		<h1 id="connections"><i class="ri-reserved-fill"></i>连接</h1>
+		<h2>状态</h2>
+		<ul style="list-style: none">
+			<li><i class="ri-server-line"></i>服务器URL: http://127.0.0.1:11451 </li>
+			<li><i class="ri-router-line"></i>连接状态: NaN</li>
+		</ul>
+		<h2>配置</h2>
+		<form class="conf">
+			<table align="left">
+				<tr>
+					<td><i class="ri-server-line"></i>服务器URL&nbsp;</td>
+					<td><input class="premission_inneed" type="text" name="ServerURL" placeholder="服务器URL" value="http://127.0.0.1:11451" disabled="disabled"></td>
+				</tr>
+				<tr>
+					<td><i class="ri-key-line"></i>Token&nbsp;</td>
+					<td><input class="premission_inneed" type="password" name="Token" placeholder="Token" value="1145141919810" disabled="disabled"></td>
+				</tr>
+			</table>
+		</form>
+		<hr>
+		
+		<!--通知-->
+		<h1 id="notifications"><i class="ri-notification-4-fill"></i>通知</h1>
+		<form class="conf">
+			<table align="left">
+				<!--子项-->
+				<tr><td>
+					<h3><i class="ri-notification-off-line"></i>免打扰</h3>
+					<div class="info" type="warning">
+						该设置项不会过滤<span style="font-style: italic">A类优先级通知</span>
+					</div><br>
+				</td></tr>
+				<tr>
+					<td>
+						<input type="radio" name="NoDisturb" value="on" disabled="disabled">开启<br>
+						<input type="radio" name="NoDisturb" value="off" disabled="disabled" checked>关闭<br>
+					</td>
+				</tr>
+				<tr>
+					<td><input type="checkbox" name="NoDisturbAtRegIntervals" value="No-Disturb at regular intervals" disabled="disabled">定时免打扰</td>
+				</tr>
+				
+				<!--子项-->
+				<!--ToDo-->
+				<!--<tr><td><h3><i class="ri-music-line"></i>铃声</h3></td></tr>
+				<tr>
+					<td>
+						<select name="tone">
+							<option value="default" selected>CQCQ</option>
+							<option value="os" style="font-style: italic">系统默认</option>
+							<option value="fromFile">选择文件</option>
+						</select>
+					</td>
+				</tr> -->
+
+			</table>
+		</form>
+		<hr>
+		
+		<!--此处插入其他项-->
+		
+		<!--关于-->
+		<h1 id="about"><i class="ri-information-fill"></i>关于</h1>
+		<span class="package name" style="font-size: 64px">Ayase</span><br>
+		<span class="package version" style="font-size: 32px">Version 0.0.0</span><br>
+		<span class="package copyright">Copyright © 2022 kawashiro-ryofu & the <span class="package name"> Ayase developers</span><br>
+		<span class="package license">Licensed Under <a href="https://www.mozilla.org/en-US/MPL/2.0/" target="_blank">Mozilla Public License, version 2.0</a></span><br><br>
+		<a href="#">开发人员名单及鸣谢列表</a> <a href="#">主页</a> <a href="#">开放源代码库</a><br><br>
+    </div>
+    
+    <!--模板 提示-->
+    <template type="info">
+		<div class="info" type="warning">你好</div>
+    </template>
+    <script>
+		var certified = false;
+
+		
+
+    </script>
+  </body>
+</html>
