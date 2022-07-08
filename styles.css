@@ -229,6 +229,16 @@ hr{
 	color: aquamarine;
 }
 
+#remote-status-display{
+	display: inline-block;
+	color: white;
+	background-color: black;
+	width: 15vh;
+    padding: 5px;
+    border-radius: 5px;
+	text-align: center;
+}
+
 /* 设置 */
 
 #settings{
@@ -273,18 +283,25 @@ hr{
 	padding-left: 40px;
 }
 
-/* 此项需要修正*/
-
+/* 提示框 */
+/*
+	其实更应该被称为tip，
+*/
 .info{
 	border: solid 3px;
     border-color: white;
     color: white;
     padding: 10px;
-    width: 40vh;
+    width: 60vh;
 }
 
 .info[type="warning"]{
 	border-color: yellow;
 	color: yellow;
+}
+
+.info[type="error"]{
+	border-color: red;
+	color: red;
 }
 

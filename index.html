@@ -6,7 +6,8 @@
     <!--<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'">-->
     <link href="./styles.css" rel="stylesheet">
     <link href='node_modules/font-awesome/css/font-awesome.min.css' rel="stylesheet">
-    <title>TeleScreen</title>
+    <link href='node_modules/font-awesome-animation/css/font-awesome-animation.min.css' rel="stylesheet">
+    <title>Ayase</title>
   </head>
   <body>
       <div id="loading">
@@ -17,10 +18,18 @@
         window.$ = window.jQuery = require('./node_modules/jquery/dist/jquery.min.js');
       </script>
       <div id="main-wrapper">
-        <h1 class="title">スタート~</h1>
+        <h1 class="title">Ayase</h1>
         <div id="navi">
           <a class="naviobj settings" title="设置" onclick="settings()"><i class="fa fa-cog" aria-hidden="true"></i></a>
-          <a class="naviobj connection" title="连接状态"><i class="fa fa-signal" aria-hidden="true"></i></a>
+          <a class="naviobj refresh" title="刷新" onclick="GetDataFromRemote()"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+          |
+          <span class="naviobj remote-status" title="连接状态">
+            <i class="fa fa-server" aria-hidden="true"></i>
+            <div class="remote-status" id="remote-status-display">
+              <span class="rs-ico"><i class="fa fw fa-spin fa-circle-o-notch"></i></span>
+              <span class="rs-descr">正在连接</span>
+            </div>
+          </span>
         </div>
         <ul id="main-list">
           <li>
@@ -33,5 +42,21 @@
 
     <!--<script src="./node_modules/jquery/dist/jquery.min.js"></script>-->
     <script src="./renderer.js"></script>
+    <script>
+      var refreshButton = $('a.refresh i')
+      refreshButton.on('click', async function(){
+        refreshButton.addClass('fa-spin')
+        var y = setInterval(()=>{
+          if(localNoticeCache.GetDataLock != true){
+            refreshButton.removeClass('fa-spin')
+            clearInterval(y)
+          }
+        }, 1000)
+        setTimeout(()=>{
+          refreshButton.removeClass('fa-spin')
+          clearInterval(y)
+        },300000)
+      })
+    </script>
   </body>
 </html>

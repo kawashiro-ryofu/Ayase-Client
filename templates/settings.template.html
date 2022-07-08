@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
+    <!--<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'">-->
+    <link href="./styles.css" rel="stylesheet">
+    <link href='node_modules/font-awesome/css/font-awesome.min.css' rel="stylesheet">
+    <link href='node_modules/remixicon/fonts/remixicon.css' rel="stylesheet">
+	<script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+    <title>{{ title }}</title>
+  </head>
+  <body>
+    <div id="settings-sidebar">
+	  <h1>{{ title }}</h1>
+
+      <ul id="settings-item-list">
+        <li><a class="settings-itemlnk" href="#connections" title="{{ Connections_title }}">{{ Connections_icotitle }}</a></li><br>
+        <li><a class="settings-itemlnk" href="#notifications" title="{{ Notifications_title }}">{{ Notifications_icotitle }}</a></li><br>
+        <!--通用设置-->
+        <!--扩展-->
+        <li><a class="settings-itemlnk"  href="#about" title="{{ About_title }}">{{ About_icotitle }}</a></li>
+      </ul>
+    </div>
+    <div id="settings">
+		<!--连接-->
+		<h1 id="connections">{{ Connections_icotitle }}</h1>
+		<h2>{{ Connections_Label_Stats }}</h2>
+		<ul style="list-style: none">
+			<li>{{ Connections_Label_iconURL }}: {{ Connections_URL }} </li>
+			<li>{{ Connections_Label_iconConnectionStats }}: {{ Connections_HTTPstats }}</li>
+		</ul>
+		<h2>{{ Connections_Label_Conf }}</h2>
+		<form class="conf">
+			<table align="left">
+				<tr>
+					<td>{{ Connections_Label_iconURL }}&nbsp;</td>
+					<td><input class="premission_inneed" type="text" name="ServerURL" placeholder="{{ Connections_Label_URL }}" value="{{ Connections_URL }}" disabled="disabled"></td>
+				</tr>
+				<tr>
+					<td><i class="ri-key-line"></i>Token&nbsp;</td>
+					<td><input class="premission_inneed" type="password" name="Token" placeholder="Token" value="1145141919810" disabled="disabled"></td>
+				</tr>
+			</table>
+		</form>
+		<hr>
+		
+		<!--通知-->
+		<h1 id="notifications">{{ Notifications_icotitle }}</h1>
+		<form class="conf">
+			<table align="left">
+				<!--子项-->
+				<tr><td>
+					<h3>{{ Notifications_icoNoDisturb }}</h3>
+					<!--<div class="info" type="warning">
+						该设置项不会过滤<span style="font-style: italic">A类优先级通知</span>
+					</div><br>-->
+					{{ Notifications_NoDisturb_Tip }}
+				</td></tr>
+				<tr>
+					<td>
+						<input type="radio" name="NoDisturb" value="on" disabled="disabled">{{ On }}<br>
+						<input type="radio" name="NoDisturb" value="off" disabled="disabled" checked>{{ Off }}<br>
+					</td>
+				</tr>
+				<tr>
+					<td><input type="checkbox" name="NoDisturbAtRegIntervals" value="No-Disturb at regular intervals" disabled="disabled">{{ Notifications_NoDisturb_Auto }}</td>
+				</tr>
+				
+				<!--子项-->
+				<!--ToDo-->
+				<!--<tr><td><h3><i class="ri-music-line"></i>铃声</h3></td></tr>
+				<tr>
+					<td>
+						<select name="tone">
+							<option value="default" selected>CQCQ</option>
+							<option value="os" style="font-style: italic">系统默认</option>
+							<option value="fromFile">选择文件</option>
+						</select>
+					</td>
+				</tr> -->
+
+			</table>
+		</form>
+		<hr>
+		
+		<!--此处插入其他项-->
+		
+		<!--关于-->
+		<h1 id="about"><i class="ri-information-fill"></i>{{ About_icotitle }}</h1>
+		<span class="package name" style="font-size: 64px">{{ About_PackageName }}</span><br>
+		<span class="package version" style="font-size: 32px">Version {{ About_PackageVersion }}</span><br>
+		<span class="package copyright">Copyright © 2022 kawashiro-ryofu & the {{ About_PackageName }} developers<br>
+		<span class="package license">Licensed Under <a href="https://www.mozilla.org/en-US/MPL/2.0/" target="_blank">Mozilla Public License, version 2.0</a></span><br><br>
+		<a href="#">{{ About_STAFF }}</a> <a href="#">{{ About_HomePage }}</a> <a href="#">{{ About_OpenSourceLibs }}</a><br><br>
+    </div>
+  </body>
+</html>

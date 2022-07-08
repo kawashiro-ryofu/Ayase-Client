@@ -1,6 +1,6 @@
 /*
-  TeleScreen alpha 20220603
-  (C) 2022 kawashiro-ryofu
+  Ayase-Client
+  (C) 2022 kawashiro-ryofu & thr Ayase developers
   Licenced Under MPL2.0
 */
 
@@ -10,11 +10,58 @@ const path = require('path')
 const jquery = require('jquery')
 const { ipcMain } = require('electron')
 const { dialog } = require('electron')
+const os = require('os')
 
 require('@electron/remote/main').initialize();
 
+//设置页 锁 防止多开
+var settingsLock = false
 
-function createWindow (scrwidth, scrheight) {
+//渲染器 IPC 接收
+ipcMain.on('asynchronous-message', (event, arg) => {
+  
+
+  // 渲染进程 IPC调用
+  var rendererFunc = {
+    // 打开设置界面
+    "settings": async function(anchor){
+      if(!settingsLock){
+        settingsLock = true
+        const settingsWindow = new BrowserWindow({
+          width: 800,
+          height: 600,
+          minWidth: 640,
+          minHeight: 480,
+          icon: 'favicon.ico',
+          autoHideMenuBar: true,
+          webPreferences: {
+            preload: path.join(__dirname, 'preload.js'),
+            contextIsolation: false,
+            nodeIntegration: true
+          },
+        })
+
+        await settingsWindow.loadFile('settings.html')
+        console.log('Loading Settings')
+
+        settingsWindow.on('closed',()=>{
+          settingsLock = false
+          console.log('Exited Settings')
+        })
+      }
+    }
+  }
+
+  // 解析 渲染器 IPC 接收
+  var r = JSON.parse(arg)
+  console.log(r)
+  if(r.argsjson != undefined) rendererFunc[r.command](JSON.parse(r.argsjson))
+  else rendererFunc[r.command]()
+  
+})
+
+
+function sideNBar (scrwidth, scrheight) {
   
   // Create the browser window.
   const mainWindow = new BrowserWindow({
@@ -25,22 +72,21 @@ function createWindow (scrwidth, scrheight) {
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: false,
-      nodeIntegration: true
+      nodeIntegration: true,
+      /*devTools: false*/
     },
     frame: false,
-    /*minWidth: 300,
-    minHeight: 900,
-    maxWidth: 300,
-    maxHeight: 900,*/
     minimizable: false,
     maximizable: false,
     closable: false,
-    skipTaskbar: true
+    skipTaskbar: true,
+    icon: 'favicon.ico',
+ 
   })
 
   // and load the index.html of the app.
   mainWindow.loadFile('index.html')
-  mainWindow.webContents.openDevTools()
+  mainWindow.webContents.closeDevTools()
   //mainWindow.setSkipTaskbar(true)
   // Open the DevTools.
   // mainWindow.webContents.openDevTools()
@@ -55,12 +101,12 @@ app.whenReady().then(() => {
   const { screen } = require('electron')
   const primaryDisplay = screen.getPrimaryDisplay()
   const { width, height } = primaryDisplay.workAreaSize
-  createWindow(width, height)
+  sideNBar(width, height)
 
   app.on('activate', function () {
     // On macOS it's common to re-create a window in the app when the
     // dock icon is clicked and there are no other windows open.
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+    if (BrowserWindow.getAllWindows().length === 0) sideNBar()
   })
 })
 
@@ -74,20 +120,3 @@ app.on('window-all-closed', function () {
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
 
-var rendererFunc = {
-  "MsgBox": function(argsjson){
-    const { dialog } = require('electron')
-    args = JSON.parse(argsjson)
-    
-  }
-}
-
-// 解析 渲染器 IPC 接收
-function parseRenderIPC(jsonstr){
-
-}
-
-//渲染器 IPC 接收
-ipcMain.on('asynchronous-message', (event, arg) => {
-  parseRenderIPC(arg) 
-})

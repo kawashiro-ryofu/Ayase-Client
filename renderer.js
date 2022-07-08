@@ -6,11 +6,16 @@
 // process.
 
 
-// 启动页
+// 启动
 const package = require("./package.json");
 const http = require('http');
 const { now } = require("jquery");
 const fs = require('fs')
+const { BrowserWindow } = require('@electron/remote');
+const { Console } = require("console");
+const dialog = require('@electron/remote').dialog
+const os = require('os')
+const path = require('path')
 
 setTimeout(async function(){
     $('#loading').fadeOut()
@@ -76,7 +81,7 @@ function FormatDate(dateobj = new Date(), format = "%Y-%m-%d %a", DOW = ["SUN", 
 
 //  新窗口
 function NewWin(url, args = ""){
-    window.open(url, '_blank', 'minHeight=768,minWidth=1024,autoHideMenuBar=true,nodeIntegration=true' + args)
+    window.open(url, '_blank', 'minHeight=768,minWidth=1024,autoHideMenuBar=true,nodeIntegration=true,icon=favicon.ico' + args)
 }
 
 //  去除HTML标签
@@ -108,12 +113,12 @@ function UUID() {
 var noticeBar = []
 
 //      通知：对象
-function Notice(title, content, publisher, level = "D", description=delHtmlTag(content), pubDate = new Date(), uuid=UUID()){
+function Notice(title, content, publisher, level, pubDate, uuid, description = delHtmlTag(content)){
     this.title = title; /* 标题 */
     this.content = content; /* 正文 */
     this.description = description; /* 描述 */ 
     this.publisher = publisher; /* 发布者 */
-    this.pubDate = pubDate; /* 发布时间 */
+    this.pubDate = pubDate; /* 发布时间（Date对象） */
     this.uuid = uuid; /* （远端服务器）UUID */
     this.level = level; /* 优先级 */
     this.id = noticeBar.length /* （本机）ID */
@@ -131,16 +136,15 @@ Notice.prototype = {
         readerTemplate = readerTemplate.replaceAll('{{ pubDate }}', FormatDate(this.pubDate, '%Y-%m-%d %H:%M') + '')
         readerTemplate = readerTemplate.replaceAll('{{ publisher }}', this.publisher)
         readerTemplate = readerTemplate.replaceAll('{{ level }}', this.level)
-        //console.log(readerTemplate)
+
         let filename = Math.round(Math.random() * 131072) + '.tmp.html'
-        //console.log(filename)
-        fs.writeFile(filename, readerTemplate, { flag: 'w+' }, (err) => {
+        this.read = true
+        fs.writeFile(filename, readerTemplate, { flag: 'w+' }, async function(err){
             if (err) throw err;
+
             NewWin(filename)
-            setTimeout(function(){
-                fs.rm(filename, undefined, (err)=>undefined)
-            }, 5000)
-            this.read = true
+            setTimeout(function(){fs.rm(filename, undefined, (err)=>undefined)},200)
+            
         })
 
     }
@@ -156,6 +160,7 @@ const notifTemplate = require('./templates.js').notifTemplate
 //          eleNum: 元素下标
 function GenNoticeCard(notice){
     var temporyTemplate = notifTemplate;
+    
     temporyTemplate = temporyTemplate.replaceAll('{{ uuid }}', notice.uuid)
     temporyTemplate = temporyTemplate.replaceAll('{{ title }}', notice.title)
     temporyTemplate = temporyTemplate.replaceAll('{{ description }}', notice.description)
@@ -165,6 +170,7 @@ function GenNoticeCard(notice){
     var unreadClassAttr = "unread"
     if(notice.read)unreadClassAttr = ""
     temporyTemplate = temporyTemplate.replaceAll('{{ unread }}', unreadClassAttr)
+
     return temporyTemplate
 }
 
@@ -235,10 +241,6 @@ document.getElementById('main-list').onscroll = function(){
     }
 }
 
-function settings(){
-    NewWin('settings.html', )
-}
-
 // 主进程 IPC 通信 包装
 function toMainTask(command, argsjson){
     const { ipcRenderer } = require('electron')
@@ -246,3 +248,111 @@ function toMainTask(command, argsjson){
 
     ipcRenderer.send('asynchronous-message', JSON.stringify(x))
 }
+
+// （主进程）调出设置
+function settings(){
+    toMainTask('settings')
+}
+
+// （临时）设置
+//  serverURL：服务器URL
+//  token：（16位）16进制令牌
+var LocalSettings = {
+    serverURL: 'http://127.0.0.1:8888/',
+    token: "40234AC45CFEADDE"
+}
+
+// 本地数据缓存及XHL
+var localNoticeCache = {
+    LatestUpdateTime: 0,    /*本地保存的 服务端 最新更新时间 JSON*/
+    LatestData: {},         /*本地保存的 最新数据（通知列表）*/
+    GetDataLock: false,     /*刷新操作 锁定*/
+    // 获取最新更新时间用的XHL
+    LUT_XHR: new XMLHttpRequest(),
+    // 获取数据用的XHL
+    LDT_XHR: new XMLHttpRequest(),
+    autoRefresh: undefined
+}
+
+// 服务器路由：
+//  /:token/LatestUpdateDate -> (json)最新发布时间 <UNIX时间戳>
+//  /:token/NoticesList -> (json)适用于本机的所有通知列表
+
+
+async function GetDataFromRemote(){
+    // 取消先前设定的 下一次自动刷新的 延迟
+    clearTimeout(localNoticeCache.autoRefresh)
+
+    // 对话框生成
+    // （需要切换为 导航栏状态显示）
+    function ConnErr(xhr, status, error){
+        var errmsg = "{{ ErrName }} \nStatus: {{ Status }}"
+        var statN = "Connection Error"
+        if(status == 'error')statN = xhr.statusText
+        else statN = status
+        errmsg = errmsg.replace("{{ ErrName }}", statN)
+        errmsg = errmsg.replaceAll("{{ Status }}", xhr.status)
+        dialog.showErrorBox(statN, errmsg)
+
+        // 连接错误、失败 的 自动刷新 （延迟10分钟）
+        localNoticeCache.autoRefresh = setTimeout(function(){
+            GetDataFromRemote()
+        }, 600000)
+    }
+
+    // 防止重复操作
+    if(!localNoticeCache.GetDataLock){
+        localNoticeCache.GetDataLock = true
+
+        // 获取 最新更新时间 以确定是否需要更新数据
+        localNoticeCache.LUT_XHR = $.ajax({
+            type: 'GET',
+            url: LocalSettings.serverURL + '/' + LocalSettings.token + '/LatestUpdateDate',
+            dataType: 'json',
+            error: (xhr, status, error)=>{ConnErr(xhr, status, error)},
+            success:function(data){
+                if(localNoticeCache.LatestUpdateTime <= data.LatestUpdateDate){
+                    localNoticeCache.LatestUpdateTime = data.LatestUpdateDate
+                    fetchNoticeData()
+                }
+            },
+            complete: function(){
+                localNoticeCache.GetDataLock = false
+            }
+        })
+
+    }
+
+
+    function fetchNoticeData(){
+        localNoticeCache.LDT_XHR =  $.ajax({
+            type: 'GET',
+            url: LocalSettings.serverURL + '/' + LocalSettings.token + '/NoticesList',
+            dataType: 'json',
+            error:  (xhr, status, error)=>{ConnErr(xhr, status, error)},
+            success:async function(data){
+                // 如果有更新的数据，则存入内存并将新的通知对象加入noticeBar数组
+                //  **后期需要一个readAlready数组来保存已经阅读的通知的UUID**
+                if(JSON.stringify(localNoticeCache.LatestData) != JSON.stringify(data)){
+                    localNoticeCache.LatestData = data
+                    // 逐条加入
+                    localNoticeCache.LatestData.Notices.forEach(function(value, index){
+                        var description = ""
+                        if(value.description == undefined)description = delHtmlTag(value.content).slice(0, 30)
+                        else description = value.description
+                        new Notice(value.title, value.content, value.publisher, value.level, new Date(parseInt(value.pubDate)),  value.uuid, description)
+                    })
+                    FreshNoticeBar()
+                }
+                
+                // 设定 下一次自动刷新
+                localNoticeCache.autoRefresh = setTimeout(function(){
+                    GetDataFromRemote()
+                }, 10000)
+            },
+            
+        })
+    }
+}
+
+GetDataFromRemote()

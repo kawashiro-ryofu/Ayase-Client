@@ -11,6 +11,7 @@
     <title>{{ title }}</title>
   </head>
   <body>
+	<script>window.$ = window.jQuery = require('./node_modules/jquery/dist/jquery.min.js');	</script>
     <div id="settings-sidebar">
 	  <h1>设置</h1>
 
@@ -27,19 +28,19 @@
 		<h1 id="connections"><i class="ri-reserved-fill"></i>连接</h1>
 		<h2>状态</h2>
 		<ul style="list-style: none">
-			<li><i class="ri-server-line"></i>服务器URL: http://127.0.0.1:11451 </li>
-			<li><i class="ri-router-line"></i>连接状态: NaN</li>
+			<li><i class="ri-server-line"></i>服务器URL: <span class="ServerURL">undefined</span> </li>
+			<li><i class="ri-router-line"></i>连接状态: <span class="Status">NaN</span></li>
 		</ul>
 		<h2>配置</h2>
 		<form class="conf">
 			<table align="left">
 				<tr>
 					<td><i class="ri-server-line"></i>服务器URL&nbsp;</td>
-					<td><input class="premission_inneed" type="text" name="ServerURL" placeholder="服务器URL" value="http://127.0.0.1:11451" disabled="disabled"></td>
+					<td><input class="premission_inneed" type="text" name="ServerURL" placeholder="服务器URL" value="" disabled="disabled"></td>
 				</tr>
 				<tr>
 					<td><i class="ri-key-line"></i>Token&nbsp;</td>
-					<td><input class="premission_inneed" type="password" name="Token" placeholder="Token" value="1145141919810" disabled="disabled"></td>
+					<td><input class="premission_inneed" type="password" name="Token" placeholder="Token" value="" disabled="disabled"></td>
 				</tr>
 			</table>
 		</form>
@@ -87,22 +88,24 @@
 		
 		<!--关于-->
 		<h1 id="about"><i class="ri-information-fill"></i>关于</h1>
-		<span class="package name" style="font-size: 64px">Ayase</span><br>
-		<span class="package version" style="font-size: 32px">Version 0.0.0</span><br>
-		<span class="package copyright">Copyright © 2022 kawashiro-ryofu & the <span class="package name"> Ayase developers</span><br>
+		<span class="package name" style="font-size: 64px">
+			<img src="favicon.ico" style="background: white;display: inline;height: 10vh;"> Ayase
+		</span><br>
+		<span class="package version" style="font-size: 32px"></span><br>
+		<span class="package copyright"></span><br>
 		<span class="package license">Licensed Under <a href="https://www.mozilla.org/en-US/MPL/2.0/" target="_blank">Mozilla Public License, version 2.0</a></span><br><br>
 		<a href="#">开发人员名单及鸣谢列表</a> <a href="#">主页</a> <a href="#">开放源代码库</a><br><br>
-    </div>
-    
-    <!--模板 提示-->
-    <template type="info">
-		<div class="info" type="warning">你好</div>
-    </template>
-    <script>
-		var certified = false;
-
-		
-
-    </script>
+		<script>
+			$('span.package.version').html("Version: " + require('./package.json').version)
+			//$('span.package.copyright').html("Copyright © 2022-"+ new Date().getFullYear() +" kawashiro-ryofu & the Ayase developers")
+			$('span.package.copyright').html("Copyright © 2022 kawashiro-ryofu & the Ayase developers")
+		</script>
+	</div>
+	<script>
+		$(document).ready(()=>{
+			$('.info[type="warning"]').prepend('<i class="fa fa-warning"></i>')
+			$('.info[type="error"]').prepend('<i class="fa fa-times-circle"></i>')
+		})
+	</script>
   </body>
 </html>
