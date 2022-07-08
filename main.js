@@ -11,6 +11,9 @@ const jquery = require('jquery')
 const { ipcMain } = require('electron')
 const { dialog } = require('electron')
 
+require('@electron/remote/main').initialize();
+
+
 function createWindow (scrwidth, scrheight) {
   
   // Create the browser window.
@@ -41,6 +44,8 @@ function createWindow (scrwidth, scrheight) {
   //mainWindow.setSkipTaskbar(true)
   // Open the DevTools.
   // mainWindow.webContents.openDevTools()
+
+  require("@electron/remote/main").enable(mainWindow.webContents)
 }
 
 // This method will be called when Electron has finished
@@ -69,19 +74,20 @@ app.on('window-all-closed', function () {
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
 
-// 渲染器操作函数
-renderFuncs = {
-  // MsgBox对话框
-  //  icon: 图标(str)
-  "MsgBox": dialog.showMessageBoxSync
+var rendererFunc = {
+  "MsgBox": function(argsjson){
+    const { dialog } = require('electron')
+    args = JSON.parse(argsjson)
+    
+  }
 }
 
-// 与渲染层的IPC通信
+// 解析 渲染器 IPC 接收
+function parseRenderIPC(jsonstr){
+
+}
+
+//渲染器 IPC 接收
 ipcMain.on('asynchronous-message', (event, arg) => {
-  console.log(arg) // prints "ping"
-  event.reply('asynchronous-reply', 'pong')
-})
-ipcMain.on('synchronous-message', (event, arg) => {
-  console.log(arg) // prints "ping"
-  event.returnValue = 'pong'
+  parseRenderIPC(arg) 
 })

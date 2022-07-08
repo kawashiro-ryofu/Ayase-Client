@@ -238,3 +238,11 @@ document.getElementById('main-list').onscroll = function(){
 function settings(){
     NewWin('settings.html', )
 }
+
+// 主进程 IPC 通信 包装
+function toMainTask(command, argsjson){
+    const { ipcRenderer } = require('electron')
+    var x = {"command": command, "argsjson": argsjson}
+
+    ipcRenderer.send('asynchronous-message', JSON.stringify(x))
+}
