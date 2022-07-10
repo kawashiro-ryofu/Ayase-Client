@@ -11,8 +11,16 @@ const jquery = require('jquery')
 const { ipcMain } = require('electron')
 const { dialog } = require('electron')
 const os = require('os')
+const process = require('node:process')
+const shell = require('shelljs')
 
 require('@electron/remote/main').initialize();
+
+// 通知修复
+if (process.platform === 'win32')
+{
+    app.setAppUserModelId('Ayase');
+}
 
 //设置页 锁 防止多开
 var settingsLock = false
@@ -119,4 +127,9 @@ app.on('window-all-closed', function () {
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
+
+setInterval(()=>{
+  // 删除临时文件
+  if(shell.ls('./*.tmp.html').length != 0)shell.rm('./*.tmp.html')
+}, 10000)
 

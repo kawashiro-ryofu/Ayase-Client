@@ -57,6 +57,16 @@
           clearInterval(y)
         },300000)
       })
+
+      // 时钟
+      setInterval(
+          function(){
+              var Now = new Date();
+              var D = FormatDate(Now);
+              var T = FormatDate(Now, "%H:%M")
+              $('#clock .c_time').html(T)
+              $('#clock .c_date').html(D)
+      },500)
     </script>
   </body>
 </html>

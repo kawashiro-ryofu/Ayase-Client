@@ -16,6 +16,8 @@ const { Console } = require("console");
 const dialog = require('@electron/remote').dialog
 const os = require('os')
 const path = require('path')
+const shell = require('shelljs');
+shell.config.execPath = shell.which('node').toString()
 
 setTimeout(async function(){
     $('#loading').fadeOut()
@@ -81,7 +83,7 @@ function FormatDate(dateobj = new Date(), format = "%Y-%m-%d %a", DOW = ["SUN", 
 
 //  新窗口
 function NewWin(url, args = ""){
-    window.open(url, '_blank', 'minHeight=768,minWidth=1024,autoHideMenuBar=true,nodeIntegration=true,icon=favicon.ico' + args)
+    window.open(url, '_blank', 'minHeight=768,minWidth=1024,autoHideMenuBar=true,nodeIntegration=true,icon=favicon.ico,devTools=false' + args)
 }
 
 //  去除HTML标签
@@ -111,6 +113,8 @@ function UUID() {
 //      通知栏：数组
 //      数组元素为Notice对象
 var noticeBar = []
+//      已读通知UUID数组
+var readAlready = []
 
 //      通知：对象
 function Notice(title, content, publisher, level, pubDate, uuid, description = delHtmlTag(content)){
@@ -120,11 +124,21 @@ function Notice(title, content, publisher, level, pubDate, uuid, description = d
     this.publisher = publisher; /* 发布者 */
     this.pubDate = pubDate; /* 发布时间（Date对象） */
     this.uuid = uuid; /* （远端服务器）UUID */
+    /* 优先级
+        说明
+
+        级别                通知    响铃    弹窗
+
+        A （紧急 重要）       1      1      1
+        B （不紧急 重要）     1      1      0
+        C （紧急 不重要）     1      0      0
+        D （不紧急 不重要）   0      0      0
+    */
     this.level = level; /* 优先级 */
     this.id = noticeBar.length /* （本机）ID */
     noticeBar[this.id] = this
-    //FreshNoticeBar()
 }
+
 Notice.prototype = {
     read: false,
     // 阅读器
@@ -138,17 +152,14 @@ Notice.prototype = {
         readerTemplate = readerTemplate.replaceAll('{{ level }}', this.level)
 
         let filename = Math.round(Math.random() * 131072) + '.tmp.html'
+        if(!(readAlready.includes(this.uuid)))readAlready[readAlready.length] = this.uuid
         this.read = true
         fs.writeFile(filename, readerTemplate, { flag: 'w+' }, async function(err){
             if (err) throw err;
-
             NewWin(filename)
             setTimeout(function(){fs.rm(filename, undefined, (err)=>undefined)},200)
-            
         })
-
     }
-
 }
 
 
@@ -176,9 +187,7 @@ function GenNoticeCard(notice){
 
 //      通知栏刷新：函数
 function FreshNoticeBar(){
-
     $('.notice').remove()
-
     let temporyNoticeBar = []
     for(var a = noticeBar.length; a >= 0; a--){
         temporyNoticeBar[noticeBar.length - a] = noticeBar[a]
@@ -202,31 +211,53 @@ function FreshNoticeBar(){
         }
     }
     
+    // To-Do
+    // 通知 整合
     setTimeout(function () {
         temporyNoticeBar.forEach(function (currentValue, index) {
             $('#main-list').append(GenNoticeCard(currentValue, index));
             $('#main-list li .card').slideDown()
-            if(currentValue.level == "A" && currentValue.read == false){
-                currentValue.Read()
-                $('#main-list li [id="' + currentValue.id +'"]').removeClass('unread')
+            // Multi-Language Support Required
+            if(currentValue.read != true){
+                var title = "新通知"
+                var body = `发布者: ${currentValue.publisher}\n通知级别: ${currentValue.level}`
+                if(readAlready.includes(currentValue.uuid)){
+                    title = "通知变动"
+                    body += `\n更新时间: ${FormatDate(currentValue.pubDate)}`
+                }
+                function addNotification(){
+                    new Notification(
+                        title,
+                        {
+                            body: body,
+                            icon: "favicon.ico",
+                            silent: true
+                        }
+                    ).onclick = function(){
+                        currentValue.Read()
+                    }
+                }
+                switch(currentValue.level){
+                    case 'C':
+                        addNotification()
+                        break;
+                    case 'B':
+                        addNotification()
+                        new Audio('audios/CQ.mp3').play()
+                        break;
+                    case 'A': 
+                        addNotification()
+                        new Audio('audios/CQ.mp3').play()
+                        currentValue.Read()
+                        $('#main-list li [id="' + currentValue.id +'"]').removeClass('unread')
+                        break;
+                }
             }
         });
     }, 100)
 
 
 }
-
-// 时钟
-setInterval(
-    function(){
-        var Now = new Date();
-        var D = FormatDate(Now);
-        var T = FormatDate(Now, "%H:%M")
-
-        $('#clock .c_time').html(T)
-        $('#clock .c_date').html(D)
-},500)
-
 
 //  #main-wrapper自动回归顶部
 scrollbackflag = false
@@ -245,7 +276,6 @@ document.getElementById('main-list').onscroll = function(){
 function toMainTask(command, argsjson){
     const { ipcRenderer } = require('electron')
     var x = {"command": command, "argsjson": argsjson}
-
     ipcRenderer.send('asynchronous-message', JSON.stringify(x))
 }
 
@@ -271,7 +301,7 @@ var localNoticeCache = {
     LUT_XHR: new XMLHttpRequest(),
     // 获取数据用的XHL
     LDT_XHR: new XMLHttpRequest(),
-    autoRefresh: undefined
+
 }
 
 // 服务器路由：
@@ -282,17 +312,84 @@ var localNoticeCache = {
 async function GetDataFromRemote(){
     // 取消先前设定的 下一次自动刷新的 延迟
     clearTimeout(localNoticeCache.autoRefresh)
+    // 函数执行记录
+    //  =1 完成获取最新更新时间
+    //  =2 完成获取数据
+    var step = 0;
+
+    // 设置导航栏remote-status框框
+    // type: err/warn/ok/''
+    // content: 内容字符串（限制为10字符）
+    function setRemoteStatusBandage(type, content){
+        // 移除 #remote-status 原有的类并插入相应的CSS类
+        $('#remote-status-display').removeClass('err')
+        $('#remote-status-display').removeClass('warn')
+        $('#remote-status-display').removeClass('ok')
+        $('#remote-status-display').addClass(type)
+
+        $('#remote-status-display .rs-descr').html('')
+
+        // font-awesome
+        var icon = new String()
+        //  图标说明
+        //  ok -> 正常
+        //  warn -> 服务端异常
+        //  err -> 本地客户端异常及网络异常
+        switch(type){
+            case 'err':
+                icon = 'fa fw fa-times-circle'
+                break;
+            case 'warn':
+                icon = 'fa fw fa-warning'
+                break;
+            case 'ok':
+                icon = 'fa fw fa-check'
+                break;
+            default:
+                icon = 'fa fw fa-spin fa-circle-o-notch'
+        }
+
+        $('.rs-ico').html(`<i class="${ icon }"></i>`)
+        $('.rs-descr').html(content)
+    }
+
+    setRemoteStatusBandage('', '正在连接')
 
     // 对话框生成
     // （需要切换为 导航栏状态显示）
     function ConnErr(xhr, status, error){
-        var errmsg = "{{ ErrName }} \nStatus: {{ Status }}"
-        var statN = "Connection Error"
-        if(status == 'error')statN = xhr.statusText
-        else statN = status
+
+        // Multi-Language Support Required
+
+        // 链路层错误
+        // readyState != 4 默认
+        var statN = "无法建立连接"
+        var type = "err"
+
+
+        // 常见HTTP错误 400 403 404 50x
+        if(xhr.readyState == 4){
+            if(xhr.status == 400)statN = "无效请求"
+            else if(xhr.status == 403)statN = "鉴权失败(Token)"
+            else if(xhr.status == 404)statN = "页面不存在"
+            else if(parseInt(xhr.status / 100) == 5){
+                statN = `服务端错误 ${xhr.status}`
+                type = "warn"
+            }else{
+                statN = `HTTP错误 ${xhr.status}`
+            }
+        }
+
+        /*if(status == 'error')statN = xhr.statusText
         errmsg = errmsg.replace("{{ ErrName }}", statN)
         errmsg = errmsg.replaceAll("{{ Status }}", xhr.status)
-        dialog.showErrorBox(statN, errmsg)
+        dialog.showErrorBox(statN, errmsg)*/
+
+        setRemoteStatusBandage(type, statN)
+        console.log(xhr)
+        console.log(status)
+
+
 
         // 连接错误、失败 的 自动刷新 （延迟10分钟）
         localNoticeCache.autoRefresh = setTimeout(function(){
@@ -303,7 +400,6 @@ async function GetDataFromRemote(){
     // 防止重复操作
     if(!localNoticeCache.GetDataLock){
         localNoticeCache.GetDataLock = true
-
         // 获取 最新更新时间 以确定是否需要更新数据
         localNoticeCache.LUT_XHR = $.ajax({
             type: 'GET',
@@ -314,6 +410,7 @@ async function GetDataFromRemote(){
                 if(localNoticeCache.LatestUpdateTime <= data.LatestUpdateDate){
                     localNoticeCache.LatestUpdateTime = data.LatestUpdateDate
                     fetchNoticeData()
+                    step++;
                 }
             },
             complete: function(){
@@ -325,30 +422,62 @@ async function GetDataFromRemote(){
 
 
     function fetchNoticeData(){
+        
         localNoticeCache.LDT_XHR =  $.ajax({
             type: 'GET',
             url: LocalSettings.serverURL + '/' + LocalSettings.token + '/NoticesList',
             dataType: 'json',
             error:  (xhr, status, error)=>{ConnErr(xhr, status, error)},
             success:async function(data){
+                // Multi-Language Support Required
+                setRemoteStatusBandage('ok', '在线')
+
                 // 如果有更新的数据，则存入内存并将新的通知对象加入noticeBar数组
                 //  **后期需要一个readAlready数组来保存已经阅读的通知的UUID**
                 if(JSON.stringify(localNoticeCache.LatestData) != JSON.stringify(data)){
                     localNoticeCache.LatestData = data
                     // 逐条加入
                     localNoticeCache.LatestData.Notices.forEach(function(value, index){
-                        var description = ""
-                        if(value.description == undefined)description = delHtmlTag(value.content).slice(0, 30)
-                        else description = value.description
-                        new Notice(value.title, value.content, value.publisher, value.level, new Date(parseInt(value.pubDate)),  value.uuid, description)
+                        
+                        // 去重
+                        var awa = false
+                        for(var a = 0; a < noticeBar.length; a++){
+
+                            if(noticeBar[a].uuid == value.uuid){
+                                if(noticeBar[a].title != value.title || 
+                                    noticeBar[a].content != value.content || 
+                                    noticeBar[a].publisher != value.publisher ||
+                                    noticeBar[a].level != value.level 
+                                ){
+                                    noticeBar[a].read = false
+                                    noticeBar[a].title = value.title
+                                    noticeBar[a].content = value.content
+                                    noticeBar[a].publisher = value.publisher
+                                    noticeBar[a].level = value.level 
+                                    noticeBar[a].pubDate = new Date(parseInt(value.pubDate))
+                                }
+                                awa = true;
+                                break;
+                            }
+                        }
+
+                        if(awa == false){
+                            var description = ""
+                            if(value.description == undefined)description = delHtmlTag(value.content).slice(0, 30)
+                            else description = value.description
+                            new Notice(value.title, value.content, value.publisher, value.level, new Date(parseInt(value.pubDate)),  value.uuid, description)
+                        }
+
+
                     })
                     FreshNoticeBar()
+                    step++
                 }
                 
                 // 设定 下一次自动刷新
                 localNoticeCache.autoRefresh = setTimeout(function(){
                     GetDataFromRemote()
-                }, 10000)
+                }, 15000)
             },
             
         })
@@ -356,3 +485,4 @@ async function GetDataFromRemote(){
 }
 
 GetDataFromRemote()
+

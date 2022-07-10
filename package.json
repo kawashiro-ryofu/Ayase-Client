@@ -17,6 +17,7 @@
     "font-awesome-animation": "^1.1.1",
     "jquery": "^3.6.0",
     "python-shell": "^3.0.1",
-    "remixicon": "^2.5.0"
+    "remixicon": "^2.5.0",
+    "shelljs": "^0.8.5"
   }
 }
