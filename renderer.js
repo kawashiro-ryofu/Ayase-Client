@@ -363,27 +363,22 @@ async function GetDataFromRemote(){
 
         // 链路层错误
         // readyState != 4 默认
-        var statN = "无法建立连接"
+        var statN = "无法连接"
         var type = "err"
 
 
         // 常见HTTP错误 400 403 404 50x
         if(xhr.readyState == 4){
             if(xhr.status == 400)statN = "无效请求"
-            else if(xhr.status == 403)statN = "鉴权失败(Token)"
-            else if(xhr.status == 404)statN = "页面不存在"
+            else if(xhr.status == 403)statN = "鉴权失败"
+            else if(xhr.status == 404)statN = "无此页面"
             else if(parseInt(xhr.status / 100) == 5){
-                statN = `服务端错误 ${xhr.status}`
+                statN = `服务端错误${xhr.status}`
                 type = "warn"
             }else{
-                statN = `HTTP错误 ${xhr.status}`
+                statN = `HTTP错误${xhr.status}`
             }
         }
-
-        /*if(status == 'error')statN = xhr.statusText
-        errmsg = errmsg.replace("{{ ErrName }}", statN)
-        errmsg = errmsg.replaceAll("{{ Status }}", xhr.status)
-        dialog.showErrorBox(statN, errmsg)*/
 
         setRemoteStatusBandage(type, statN)
         console.log(xhr)

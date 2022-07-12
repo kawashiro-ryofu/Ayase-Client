@@ -5,6 +5,7 @@
 body{
 	background-color: #1A237E;
 	color: white;
+	overflow-y: hidden;
 }
 
 a{

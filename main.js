@@ -75,6 +75,8 @@ function sideNBar (scrwidth, scrheight) {
   const mainWindow = new BrowserWindow({
     width: 300,
     height: scrheight,
+    minHeight: scrheight,
+    minWidth: 300,
     x: scrwidth-300,
     y: 0,
     webPreferences: {
@@ -116,6 +118,10 @@ app.whenReady().then(() => {
     // dock icon is clicked and there are no other windows open.
     if (BrowserWindow.getAllWindows().length === 0) sideNBar()
   })
+})
+
+app.on('uncaughtException', function(err){
+  log.error(err)
 })
 
 // Quit when all windows are closed, except on macOS. There, it's common
