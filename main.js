@@ -13,6 +13,14 @@ const { dialog } = require('electron')
 const os = require('os')
 const process = require('node:process')
 const shell = require('shelljs')
+const log = require('electron-log')
+const package = require('./package.json')
+
+// 日志·版权信息
+// <!> 日志规则：仅英文（防止读取日志时出现文字编码问题）
+log.info(`Ayase-Client v${package.version}`)
+log.info(`(C) ${ new Date().getFullYear()} kawashiro-ryofu & the Ayase Developers`)
+log.info(`Licenced Under Mozilla Public License Version 2.0`)
 
 require('@electron/remote/main').initialize();
 
@@ -50,11 +58,11 @@ ipcMain.on('asynchronous-message', (event, arg) => {
         })
 
         await settingsWindow.loadFile('settings.html')
-        console.log('Loading Settings')
+        log.info('Started Settings Window')
 
         settingsWindow.on('closed',()=>{
           settingsLock = false
-          console.log('Exited Settings')
+          log.info('Closed Settings Window')
         })
       }
     }
@@ -62,15 +70,16 @@ ipcMain.on('asynchronous-message', (event, arg) => {
 
   // 解析 渲染器 IPC 接收
   var r = JSON.parse(arg)
-  console.log(r)
+  log.info(`Received IPC ${ r }`)
   if(r.argsjson != undefined) rendererFunc[r.command](JSON.parse(r.argsjson))
   else rendererFunc[r.command]()
+
   
 })
 
 
 function sideNBar (scrwidth, scrheight) {
-  
+
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 300,
@@ -95,6 +104,7 @@ function sideNBar (scrwidth, scrheight) {
   // and load the index.html of the app.
   mainWindow.loadFile('index.html')
   mainWindow.webContents.closeDevTools()
+  log.info(`Loaded Sidebar Window`)
   //mainWindow.setSkipTaskbar(true)
   // Open the DevTools.
   // mainWindow.webContents.openDevTools()
@@ -114,6 +124,7 @@ app.whenReady().then(() => {
   app.on('activate', function () {
     // On macOS it's common to re-create a window in the app when the
     // dock icon is clicked and there are no other windows open.
+    log.info('Ready')
     if (BrowserWindow.getAllWindows().length === 0) sideNBar()
   })
 })
@@ -123,13 +134,19 @@ app.whenReady().then(() => {
 // explicitly with Cmd + Q.
 app.on('window-all-closed', function () {
   if (process.platform !== 'darwin') app.quit()
+  log.info('Quitted')
 })
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
 
-setInterval(()=>{
-  // 删除临时文件
-  if(shell.ls('./*.tmp.html').length != 0)shell.rm('./*.tmp.html')
-}, 10000)
+setTimeout(function(){
+  setInterval(()=>{
+    // 删除临时文件
 
+    shell.ls().forEach(function(currentValue, index){
+      if(/\d.tmp.html/.test(currentValue) == true)shell.rm('./*.tmp.html')
+    })
+
+  }, 10000)
+}, 10000)

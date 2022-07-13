@@ -1,4 +1,4 @@
-//      通知：前端模板
+//      侧边栏卡片模板（Notice）
 const notifTemplate = '<li>\
 <div class="card notice {{ unread }}" uuid="{{ uuid }}" id="{{ id }}" style="display:none">\
   <div class="notic_title"><i class="fa fa-bell" aria-hidden="true"></i> {{ title }}</div>\
@@ -27,7 +27,7 @@ const readerTemplate = '<!DOCTYPE html>\n'+
 '    <meta charset="utf-8">\n'+
 '    <link href="./styles.css" rel="stylesheet">\n'+
 '    <link href=\'node_modules/font-awesome/css/font-awesome.min.css\' rel="stylesheet">\n'+
-'    <title>{{ title }} - TeleScreen</title>\n'+
+'    <title>{{ title }} - Ayase</title>\n'+
 '</head>\n'+
 '<body>\n'+
 '    <style>\n'+
@@ -41,6 +41,7 @@ const readerTemplate = '<!DOCTYPE html>\n'+
 '            padding-left: 25vh;\n'+
 '            padding-right: 25vh;\n'+
 '            padding-bottom: 100px;\n'+
+'            user-select: text\n'+
 '        }  \n'+
 '        @media only screen and (max-width: 750px) {\n'+
 '            #main-wrapper{\n'+

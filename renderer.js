@@ -17,6 +17,8 @@ const dialog = require('@electron/remote').dialog
 const os = require('os')
 const path = require('path')
 const shell = require('shelljs');
+const log = require('electron-log')
+
 shell.config.execPath = shell.which('node').toString()
 
 setTimeout(async function(){
@@ -352,8 +354,6 @@ async function GetDataFromRemote(){
         $('.rs-ico').html(`<i class="${ icon }"></i>`)
         $('.rs-descr').html(content)
     }
-
-    setRemoteStatusBandage('', '正在连接')
 
     // 对话框生成
     // （需要切换为 导航栏状态显示）

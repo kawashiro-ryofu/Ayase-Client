@@ -54,7 +54,9 @@ hr{
 /* 主布局 */
 
 #main-wrapper{
+	/* 淡入 */
 	display: none;
+	user-select: none;
 }
 
 #main-wrapper .title{
@@ -92,6 +94,7 @@ hr{
 .card{
 	overflow: hidden;
 	height: 200px;
+	cursor: pointer
 }
 
 
