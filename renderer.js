@@ -19,6 +19,7 @@ const path = require('path')
 const shell = require('shelljs');
 const log = require('electron-log');
 const { electron } = require("process");
+const { read } = require("fs/promises");
 
 shell.config.execPath = shell.which('node').toString()
 
@@ -85,6 +86,7 @@ function FormatDate(dateobj = new Date(), format = "%Y-%m-%d %a", DOW = ["SUN", 
 }
 
 //  新窗口
+//  **将要废弃**
 function NewWin(url, args = ""){
     window.open(url, '_blank', 'minHeight=768,minWidth=1024,autoHideMenuBar=true,nodeIntegration=true,icon=favicon.ico,devTools=false' + args)
 }
@@ -125,7 +127,7 @@ readAlready.file = path.join(readAlready.dir, 'readAlredy')
 readAlready.save2fs = function(){
     if(!fs.existsSync(this.dir)){
         log.warn(`Writing readAlredy Cache: ${this.dir} does not exist`)
-        fs.mkthis.dirSync(this.dir)
+        fs.mkdirSync(this.dir)
         this.save2fs()
     }else{
         fs.writeFile(this.file, 
@@ -133,7 +135,7 @@ readAlready.save2fs = function(){
             'utf-8',
             function(error){
                 if(error)log.error(`Writing readAlredy Cache: ${error}`)
-                else log.info(`Wrote readAlredy Cache: ${this.file}`)
+                else log.info(`Wrote readAlredy Cache: ${readAlready.file}`)
             }
         )
     }
@@ -153,20 +155,45 @@ readAlready.loadFfs = function(){
         
     }
     else{
-        fs.readFile(this.file, 'utf-8', function(err, data){
+        try{
+            var f = fs.readFileSync(this.file, {encoding: 'utf-8', flag: 'r'})
+            log.info(`Loaded readAlredy Cache: ${this.file} `)
+            var outdat = JSON.parse(f.toString())
+            /*outdat.forEach(function(item, index){
+                if(Array.from(readAlready).includes(item)){
+                    readAlready.push(item)
+                }
+            })*/
+            for(var c = 0, len = outdat.length; c < len; c++){
+                if(!Array.from(this).includes(outdat[c]))this.push(outdat[c])
+            }
+        }catch(err){
             if(err){
                 log.error('Loading Cache readAlredy: '+err)
-            }else{
-                log.info(`Loaded readAlredy Cache: ${this.file} `)
-                var outdat = JSON.parse(data.toString())
-                outdat.forEach(function(item, index){
-                    if(Array.from(this).includes(item)){
-                        this[this.length] = item
-                    }
-                })
             }
-        })
+        }finally{
+            this.sync()
+        }
+        
     }
+}
+readAlready.sync = function(){
+    var saveInneed = false
+    log.info('Syncing readAlready to noticeBar')
+    //  应用至noticeBar数组
+    for(var c = 0, lenc = noticeBar.length; c < lenc; c++){
+        for(var d = 0, lend = this.length; c < lend; c++){
+            if(noticeBar[c].uuid == this[d]){
+                noticeBar[c].read = true
+            }
+            if((noticeBar[c].read == false && this.includes(noticeBar[c].uuid)) || (noticeBar[c].read && !this.includes(noticeBar[c].uuid))){
+                this.push(noticeBar[c].uuid)
+                noticeBar[c].read = true
+                saveInneed = true
+            }
+        }
+    }
+    if(saveInneed)this.save2fs()
 }
 
 //  读取readAlready至文件系统
@@ -212,8 +239,9 @@ Notice.prototype = {
         this.read = true
         fs.writeFile(filename, readerTemplate, { flag: 'w+' }, async function(err){
             if (err) log.error(`Error Creating temporary file: ${err}`);
-            else setTimeout(function(){NewWin(filename);fs.rm(filename)},200)
+            else setTimeout(function(){NewWin(filename)},1000)
         })
+        readAlready.save2fs()
     }
 }
 
@@ -248,6 +276,8 @@ function FreshNoticeBar(){
         temporyNoticeBar[noticeBar.length - a] = noticeBar[a]
     }
 
+    readAlready.sync()
+
     //      去除非object数据（如"undefined"）
     //      （参考https://blog.csdn.net/qq_33769914/article/details/82380957）
     for(var i = 0; i < noticeBar.length; i++) {
@@ -266,8 +296,8 @@ function FreshNoticeBar(){
         }
     }
     
-    // To-Do
-    // 通知 整合
+    // To-Do 整合
+    // 通知
     setTimeout(function () {
         temporyNoticeBar.forEach(function (currentValue, index) {
             $('#main-list').append(GenNoticeCard(currentValue, index));
@@ -439,11 +469,10 @@ async function GetDataFromRemote(){
         //console.log(status)
 
         log.error(`Connection Failed: ErrorText: ${status}, StatusCode: ${xhr.status}, Step: ${step}`)
-
+        log.warn('Reconnect after 10 minutes')
         // 连接错误、失败 的 自动刷新 （延迟10分钟）
         localNoticeCache.autoRefresh = setTimeout(function(){
             GetDataFromRemote()
-            log.warn('Reconnect after 10 minutes')
         }, 600000)
     }
 
