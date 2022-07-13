@@ -17,7 +17,8 @@ const dialog = require('@electron/remote').dialog
 const os = require('os')
 const path = require('path')
 const shell = require('shelljs');
-const log = require('electron-log')
+const log = require('electron-log');
+const { electron } = require("process");
 
 shell.config.execPath = shell.which('node').toString()
 
@@ -115,8 +116,61 @@ function UUID() {
 //      通知栏：数组
 //      数组元素为Notice对象
 var noticeBar = []
-//      已读通知UUID数组
+//      已读通知UUID数组及路径
 var readAlready = []
+readAlready.dir = path.join(__dirname, 'cache')
+readAlready.file = path.join(readAlready.dir, 'readAlredy')
+
+//      保存readAlready数组至文件系统
+readAlready.save2fs = function(){
+    if(!fs.existsSync(this.dir)){
+        log.warn(`Writing readAlredy Cache: ${this.dir} does not exist`)
+        fs.mkthis.dirSync(this.dir)
+        this.save2fs()
+    }else{
+        fs.writeFile(this.file, 
+            JSON.stringify(Array.from(this)),        /*readAlready因为往prototype加入了一些“东西”所以变成了数组*/
+            'utf-8',
+            function(error){
+                if(error)log.error(`Writing readAlredy Cache: ${error}`)
+                else log.info(`Wrote readAlredy Cache: ${this.file}`)
+            }
+        )
+    }
+}
+//      readAlready 从文件系统读取
+readAlready.loadFfs = function(){
+
+    if(!fs.existsSync(this.dir)){
+        log.warn(`Loading readAlredy Cache: ${this.dir} does not exist`)
+        fs.mkdirSync(this.dir)
+        this.save2fs()
+        
+    }
+    else if(!fs.existsSync(this.file)){
+        log.warn(`Loading readAlredy Cache: ${this.file} does not exist`)
+        this.save2fs()
+        
+    }
+    else{
+        fs.readFile(this.file, 'utf-8', function(err, data){
+            if(err){
+                log.error('Loading Cache readAlredy: '+err)
+            }else{
+                log.info(`Loaded readAlredy Cache: ${this.file} `)
+                var outdat = JSON.parse(data.toString())
+                outdat.forEach(function(item, index){
+                    if(Array.from(this).includes(item)){
+                        this[this.length] = item
+                    }
+                })
+            }
+        })
+    }
+}
+
+//  读取readAlready至文件系统
+readAlready.loadFfs()
 
 //      通知：对象
 function Notice(title, content, publisher, level, pubDate, uuid, description = delHtmlTag(content)){
@@ -157,9 +211,8 @@ Notice.prototype = {
         if(!(readAlready.includes(this.uuid)))readAlready[readAlready.length] = this.uuid
         this.read = true
         fs.writeFile(filename, readerTemplate, { flag: 'w+' }, async function(err){
-            if (err) throw err;
-            NewWin(filename)
-            setTimeout(function(){fs.rm(filename, undefined, (err)=>undefined)},200)
+            if (err) log.error(`Error Creating temporary file: ${err}`);
+            else setTimeout(function(){NewWin(filename);fs.rm(filename, undefined, (err)=>undefined)},200)
         })
     }
 }
@@ -310,8 +363,9 @@ var localNoticeCache = {
 //  /:token/LatestUpdateDate -> (json)最新发布时间 <UNIX时间戳>
 //  /:token/NoticesList -> (json)适用于本机的所有通知列表
 
-
+//  更新数据
 async function GetDataFromRemote(){
+    
     // 取消先前设定的 下一次自动刷新的 延迟
     clearTimeout(localNoticeCache.autoRefresh)
     // 函数执行记录

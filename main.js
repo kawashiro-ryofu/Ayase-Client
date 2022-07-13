@@ -84,10 +84,10 @@ function sideNBar (scrwidth, scrheight) {
   const mainWindow = new BrowserWindow({
     width: 300,
     height: scrheight,
-    minHeight: scrheight,
-    minWidth: 300,
     x: scrwidth-300,
     y: 0,
+    minHeight: scrheight,
+    minWidth: 300,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: false,
@@ -131,16 +131,16 @@ app.whenReady().then(() => {
   })
 })
 
-app.on('uncaughtException', function(err){
-  log.error(err)
-})
-
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
 app.on('window-all-closed', function () {
   if (process.platform !== 'darwin') app.quit()
-  log.info('Quitted')
+  log.info('Quit')
+})
+
+app.on('will-quit', function(){
+  log.info('Quit')
 })
 
 // In this file you can include the rest of your app's specific main process
