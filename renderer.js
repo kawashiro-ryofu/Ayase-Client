@@ -207,12 +207,12 @@ Notice.prototype = {
         readerTemplate = readerTemplate.replaceAll('{{ publisher }}', this.publisher)
         readerTemplate = readerTemplate.replaceAll('{{ level }}', this.level)
 
-        let filename = Math.round(Math.random() * 131072) + '.tmp.html'
+        let filename = path.join(__dirname, `${Math.round(Math.random() * 131072)}.tmp.html`)
         if(!(readAlready.includes(this.uuid)))readAlready[readAlready.length] = this.uuid
         this.read = true
         fs.writeFile(filename, readerTemplate, { flag: 'w+' }, async function(err){
             if (err) log.error(`Error Creating temporary file: ${err}`);
-            else setTimeout(function(){NewWin(filename);fs.rm(filename, undefined, (err)=>undefined)},200)
+            else setTimeout(function(){NewWin(filename);fs.rm(filename)},200)
         })
     }
 }
@@ -435,19 +435,21 @@ async function GetDataFromRemote(){
         }
 
         setRemoteStatusBandage(type, statN)
-        console.log(xhr)
-        console.log(status)
+        //console.log(xhr)
+        //console.log(status)
 
-
+        log.error(`Connection Failed: ErrorText: ${status}, StatusCode: ${xhr.status}, Step: ${step}`)
 
         // 连接错误、失败 的 自动刷新 （延迟10分钟）
         localNoticeCache.autoRefresh = setTimeout(function(){
             GetDataFromRemote()
+            log.warn('Reconnect after 10 minutes')
         }, 600000)
     }
 
     // 防止重复操作
     if(!localNoticeCache.GetDataLock){
+        log.info('Fetching: Latest Update Time')
         localNoticeCache.GetDataLock = true
         // 获取 最新更新时间 以确定是否需要更新数据
         localNoticeCache.LUT_XHR = $.ajax({
@@ -456,6 +458,7 @@ async function GetDataFromRemote(){
             dataType: 'json',
             error: (xhr, status, error)=>{ConnErr(xhr, status, error)},
             success:function(data){
+                log.info('Fetched: Latest Update Time')
                 if(localNoticeCache.LatestUpdateTime <= data.LatestUpdateDate){
                     localNoticeCache.LatestUpdateTime = data.LatestUpdateDate
                     fetchNoticeData()
@@ -471,15 +474,19 @@ async function GetDataFromRemote(){
 
 
     function fetchNoticeData(){
-        
+        log.info('Fetching: Notice Data')
         localNoticeCache.LDT_XHR =  $.ajax({
             type: 'GET',
             url: LocalSettings.serverURL + '/' + LocalSettings.token + '/NoticesList',
             dataType: 'json',
             error:  (xhr, status, error)=>{ConnErr(xhr, status, error)},
             success:async function(data){
+                log.info('Fetched: Notice Data')
+
                 // Multi-Language Support Required
                 setRemoteStatusBandage('ok', '在线')
+
+
 
                 // 如果有更新的数据，则存入内存并将新的通知对象加入noticeBar数组
                 //  **后期需要一个readAlready数组来保存已经阅读的通知的UUID**
