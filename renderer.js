@@ -20,6 +20,7 @@ const shell = require('shelljs');
 const log = require('electron-log');
 const { electron } = require("process");
 const { read } = require("fs/promises");
+const xss = require('xss')
 
 shell.config.execPath = shell.which('node').toString()
 
@@ -159,11 +160,6 @@ readAlready.loadFfs = function(){
             var f = fs.readFileSync(this.file, {encoding: 'utf-8', flag: 'r'})
             log.info(`Loaded readAlredy Cache: ${this.file} `)
             var outdat = JSON.parse(f.toString())
-            /*outdat.forEach(function(item, index){
-                if(Array.from(readAlready).includes(item)){
-                    readAlready.push(item)
-                }
-            })*/
             for(var c = 0, len = outdat.length; c < len; c++){
                 if(!Array.from(this).includes(outdat[c]))this.push(outdat[c])
             }
@@ -180,16 +176,35 @@ readAlready.loadFfs = function(){
 readAlready.sync = function(){
     var saveInneed = false
     log.info('Syncing readAlready to noticeBar')
+    //  去重
+    /*
+    var dir = this.dir
+    var file = this.file
+    var save2fs = this.save2fs
+    var loadFfs = this.loadFfs
+    var sync = this.sync
+    readAlready = Array.from(new Set(readAlready))
+    readAlready.dir = dir
+    readAlready.file = file
+    readAlready.save2fs = save2fs
+    readAlready.loadFfs = loadFfs
+    readAlready.sync = sync*/
+
     //  应用至noticeBar数组
     for(var c = 0, lenc = noticeBar.length; c < lenc; c++){
         for(var d = 0, lend = this.length; c < lend; c++){
-            if(noticeBar[c].uuid == this[d]){
-                noticeBar[c].read = true
-            }
-            if((noticeBar[c].read == false && this.includes(noticeBar[c].uuid)) || (noticeBar[c].read && !this.includes(noticeBar[c].uuid))){
-                this.push(noticeBar[c].uuid)
-                noticeBar[c].read = true
-                saveInneed = true
+            if(/[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}/gi.test(this[d]) == false){
+                delete this[d]
+                this[this.length] = this[d]
+            }else{
+                if(noticeBar[c].uuid == this[d]){
+                    noticeBar[c].read = true
+                }
+                if((noticeBar[c].read == false && this.includes(noticeBar[c].uuid)) || (noticeBar[c].read && !this.includes(noticeBar[c].uuid))){
+                    this.push(noticeBar[c].uuid)
+                    noticeBar[c].read = true
+                    saveInneed = true
+                }
             }
         }
     }
@@ -201,12 +216,12 @@ readAlready.loadFfs()
 
 //      通知：对象
 function Notice(title, content, publisher, level, pubDate, uuid, description = delHtmlTag(content)){
-    this.title = title; /* 标题 */
-    this.content = content; /* 正文 */
-    this.description = description; /* 描述 */ 
-    this.publisher = publisher; /* 发布者 */
+    this.title = xss(title); /* 标题 */
+    this.content = xss(content); /* 正文 */
+    this.description = xss(description); /* 描述 */ 
+    this.publisher = xss(publisher); /* 发布者 */
     this.pubDate = pubDate; /* 发布时间（Date对象） */
-    this.uuid = uuid; /* （远端服务器）UUID */
+    this.uuid = xss(uuid); /* （远端服务器）UUID */
     /* 优先级
         说明
 
@@ -217,9 +232,18 @@ function Notice(title, content, publisher, level, pubDate, uuid, description = d
         C （紧急 不重要）     1      0      0
         D （不紧急 不重要）   0      0      0
     */
-    this.level = level; /* 优先级 */
+    this.level = xss(level); /* 优先级 */
     this.id = noticeBar.length /* （本机）ID */
-    noticeBar[this.id] = this
+
+
+    if(/[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}/gi.test(this.uuid) && new Date().getTime() > this.pubDate){
+        noticeBar[this.id] = this
+    }else{
+        if(/[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}/gi.test(this.uuid) == false)log.error("Appending Notice: UUID syntax error. Maybe the server is NOT TRUSTWORTHY")
+        if(new Date().getTime() <= this.pubDate)log.error('Appending Notice: Timestamp fatal error. The publish date is later than current . It means that your local time is incorrect , or the server is from the future . ')
+        log.warn('Appending Notice: This notice will not append to the list. Please ensure that the server is TRUSTABLE, or contact the Network Administrator.')
+    }
+
 }
 
 Notice.prototype = {
@@ -548,9 +572,9 @@ async function GetDataFromRemote(){
 
                         if(awa == false){
                             var description = ""
-                            if(value.description == undefined)description = delHtmlTag(value.content).slice(0, 30)
+                            if(value.description == undefined)description = xss(delHtmlTag(value.content).slice(0, 30))
                             else description = value.description
-                            new Notice(value.title, value.content, value.publisher, value.level, new Date(parseInt(value.pubDate)),  value.uuid, description)
+                            new Notice(xss(value.title), xss(value.content), xss(value.publisher), xss(value.level), new Date(parseInt(value.pubDate)),  xss(value.uuid), xss(description))
                         }
 
 
