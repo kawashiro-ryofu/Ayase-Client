@@ -177,18 +177,21 @@ readAlready.sync = function(){
     var saveInneed = false
     log.info('Syncing readAlready to noticeBar')
     //  去重
-    /*
-    var dir = this.dir
-    var file = this.file
-    var save2fs = this.save2fs
-    var loadFfs = this.loadFfs
-    var sync = this.sync
-    readAlready = Array.from(new Set(readAlready))
-    readAlready.dir = dir
-    readAlready.file = file
-    readAlready.save2fs = save2fs
-    readAlready.loadFfs = loadFfs
-    readAlready.sync = sync*/
+    for(var c = 0, lenc = this.length; c < lenc; c++){
+        for(var d = 0, lend = this.length; d < lend; d++){
+            if(c != d && this[c] == this[d]){
+                    delete(this[d])
+            }
+        }
+    }
+        var tmp = []
+        for(var c = 0, lenc = this.length; c < lenc; c++){
+            if(this[c] != undefined){
+                tmp.push(this[c])
+            }
+        }
+        this.length = 0
+        for(var c = 0, lenc = tmp.length; c < lenc; c++)this[c] = tmp[c]
 
     //  应用至noticeBar数组
     for(var c = 0, lenc = noticeBar.length; c < lenc; c++){
@@ -239,9 +242,19 @@ function Notice(title, content, publisher, level, pubDate, uuid, description = d
     if(/[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}/gi.test(this.uuid) && new Date().getTime() > this.pubDate){
         noticeBar[this.id] = this
     }else{
-        if(/[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}/gi.test(this.uuid) == false)log.error("Appending Notice: UUID syntax error. Maybe the server is NOT TRUSTWORTHY")
-        if(new Date().getTime() <= this.pubDate)log.error('Appending Notice: Timestamp fatal error. The publish date is later than current . It means that your local time is incorrect , or the server is from the future . ')
+
+        if(/[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}/gi.test(this.uuid) == false){
+            log.error("Appending Notice: UUID syntax error. Maybe the server is NOT TRUSTWORTHY")
+            
+            //  Multi-Language require
+            dialog.showMessageBox({title: "不正常的通知对象", message: `刚刚收到的通知(UUID: ${uuid}, 标题: ${title})的UUID是非法的。\n安全起见，此通知不会被展示。`, type: "error"})
+        }
+        if(new Date().getTime() <= this.pubDate){
+            log.error('Appending Notice: Timestamp fatal error. The publish date is later than current. It means that your local time is incorrect , or the server is from the future . ')
+            dialog.showMessageBox({title: "不正常的通知对象", message: `刚刚收到的通知(UUID: ${uuid}, 标题: ${title})发布时间晚于当前时间。\n这意味着本机的时间可能不正确，或者，这则通知来自未来。\n安全起见，此通知不会被展示。`, type: "error"})
+        }
         log.warn('Appending Notice: This notice will not append to the list. Please ensure that the server is TRUSTABLE, or contact the Network Administrator.')
+        dialog.showMessageBox({title: "不正常的通知对象", message: `请联系通知服务器管理员。`, type: "warning"})
     }
 
 }
@@ -263,7 +276,7 @@ Notice.prototype = {
         this.read = true
         fs.writeFile(filename, readerTemplate, { flag: 'w+' }, async function(err){
             if (err) log.error(`Error Creating temporary file: ${err}`);
-            else setTimeout(function(){NewWin(filename)},1000)
+            else setTimeout(function(){NewWin(filename)},750)
         })
         readAlready.save2fs()
     }
