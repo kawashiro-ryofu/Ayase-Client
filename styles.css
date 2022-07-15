@@ -62,7 +62,10 @@ hr{
 
 #main-wrapper .title{
 	padding-left: 5px;
-	font-family: 'Microsoft YaHei', 'Courier New', Courier, monospace
+	font-family: 'Microsoft YaHei', 'Courier New', Courier, monospace;
+	overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 #main-wrapper #main-list{

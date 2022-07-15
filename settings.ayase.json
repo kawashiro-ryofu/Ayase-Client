@@ -1,0 +1,14 @@
+{
+	"settings": {
+		"connections": {
+			"serverURL": "http://127.0.0.1:8888",
+			"token": "40234AC45CFEADDE"
+		},
+		"no-disturb": {
+			"enable": false
+		},
+		"general": {
+			"customTitle": "I'm Funky"
+		}
+	}
+}

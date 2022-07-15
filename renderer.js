@@ -21,6 +21,7 @@ const log = require('electron-log');
 const { electron } = require("process");
 const { read } = require("fs/promises");
 const xss = require('xss')
+const LocalSettings = require('./settings.js').LocalSettings
 
 shell.config.execPath = shell.which('node').toString()
 
@@ -173,6 +174,7 @@ readAlready.loadFfs = function(){
         
     }
 }
+//      同步reaadAlready与noticeBar
 readAlready.sync = function(){
     var saveInneed = false
     log.info('Syncing readAlready to noticeBar')
@@ -406,13 +408,7 @@ function settings(){
     toMainTask('settings')
 }
 
-// （临时）设置
-//  serverURL：服务器URL
-//  token：（16位）16进制令牌
-var LocalSettings = {
-    serverURL: 'http://127.0.0.1:8888/',
-    token: "40234AC45CFEADDE"
-}
+LocalSettings.loadFfs()
 
 // 本地数据缓存及XHL
 var localNoticeCache = {
@@ -520,7 +516,7 @@ async function GetDataFromRemote(){
         // 获取 最新更新时间 以确定是否需要更新数据
         localNoticeCache.LUT_XHR = $.ajax({
             type: 'GET',
-            url: LocalSettings.serverURL + '/' + LocalSettings.token + '/LatestUpdateDate',
+            url: LocalSettings.settings.connections.serverURL + '/' + LocalSettings.settings.connections.token + '/LatestUpdateDate',
             dataType: 'json',
             error: (xhr, status, error)=>{ConnErr(xhr, status, error)},
             success:function(data){
@@ -543,7 +539,7 @@ async function GetDataFromRemote(){
         log.info('Fetching: Notice Data')
         localNoticeCache.LDT_XHR =  $.ajax({
             type: 'GET',
-            url: LocalSettings.serverURL + '/' + LocalSettings.token + '/NoticesList',
+            url: LocalSettings.settings.connections.serverURL + '/' + LocalSettings.settings.connections.token + '/NoticesList',
             dataType: 'json',
             error:  (xhr, status, error)=>{ConnErr(xhr, status, error)},
             success:async function(data){
