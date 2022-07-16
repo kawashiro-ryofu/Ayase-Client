@@ -15,43 +15,35 @@ var LocalSettings = {
     file: "settings.ayase.json",
     // 从配置文件中读取
     loadFfs: function(){
-        if(!fs.existsSync(this.dir)){
-            log.warn(`Loading Configuration: Profile does not exist`)
-            fs.mkdirSync(this.dir)
-            // To Do 配置引导
-        }
-        else if(!fs.existsSync(this.file)){
+        if(!fs.existsSync(this.file)){
             log.warn(`Loading Configuration: Profile does not exist`)
             // To Do 配置引导
-        }
-        else{
+        }else{
             try{
                 var f = fs.readFileSync(this.file, {encoding: 'utf-8', flag: 'r'})
-                log.info(`Loaded Configuration`)
                 var outdat = JSON.parse(f.toString())
                 this.settings = outdat.settings
-
-                if(this.settings.general.customTitle.length <= 0 || this.settings.general.customTitle != null)$('h1.title').html(xss(this.settings.general.customTitle))
+                log.info(`Loaded Configuration`)
             }catch(err){
                 if(err){
                     log.error('Loading Configuration: '+err)
                 }
             }
-            
         }
     },
-    save2fs: function(){
+    save2fs: async function(){
             if(!fs.existsSync(this.dir)){
                 log.warn(`Writing Configuration: ${this.dir} does not exist`)
                 fs.mkdirSync(this.dir)
                 this.save2fs()
             }else{
+                //  此处感谢Simon的建议，尽管未得到采纳
                 fs.writeFile(this.file, 
-                    JSON.stringify(this.settings),        
+                    JSON.stringify({settings: this.settings}),        
                     'utf-8',
-                    function(error, f = this.file){
+                    function(error){
                         if(error)log.error(`Writing Configuration: ${error}`)
-                        else log.info(`Wrote Configuration: ${f}`)
+                        else log.info(`Wrote Configuration: ${LocalSettings.file}`)
                     }
                 )
             }

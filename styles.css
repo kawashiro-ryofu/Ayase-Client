@@ -118,7 +118,7 @@ hr{
 
 /* 通知 */
 
-@-webkit-keyframes unreadBreathe{
+@keyframes unreadBreathe{
 	0%{
 		box-shadow: #ffff00 0px 0px 4px
 	}
@@ -138,7 +138,7 @@ hr{
 
 .card.notice.unread{
 	box-shadow: #ffff00 0px 0px 10px;
-	-webkit-animation: unreadBreathe 4s infinite linear;
+	animation: unreadBreathe 4s infinite linear;
 }
 
 .notice{
@@ -227,6 +227,7 @@ hr{
 #navi{
 	padding-left: 2vh;
     padding-right: 2vh;
+	white-space: nowrap;
 }
 #navi a{
 	margin: 4px;
@@ -236,32 +237,70 @@ hr{
 	color: aquamarine;
 }
 
+/* 导航栏 勿扰*/
+@keyframes flashing {
+	0% {
+		color: pink
+	}
+	25%{
+		color: red
+	}
+	50%{
+		color: darkred
+	}
+	75%{
+		color: red
+	}
+	100%{
+		color:pink
+	}
+}
+
+.naviobj.nodisturb i.on{
+	animation: flashing 5s infinite linear;
+}
+
+
 #remote-status-display{
     display: inline-block;
     background-color: black;
     width: 15vh;
     margin: 5px;
     margin-bottom: 10px;
-    border-radius: 5px;
+    /*border-radius: 5px;*/
     text-align: center;
     height: 22px;
     overflow: hidden;
     text-overflow: ellipsis;
     vertical-align: middle;
-	transition: background-color .3s;
 }
 
 #remote-status-display.err{
-	background-color: darkred;
+	background-color: red;
+	transition: background-color .3s;
+}
+
+#remote-status-display.err:hover{
+	background-color: darkred
 }
 
 #remote-status-display.warn{
-	background-color: darkgoldenrod;
+	background-color: goldenrod;
 	color: black;
+	transition: background-color .3s;
+}
+
+#remote-status-display.warn:hover{
+	background-color: darkgoldenrod
 }
 
 #remote-status-display.ok{
-	background-color: darkgreen;
+	background-color: green;
+	transition: background-color .3s;
+}
+
+#remote-status-display.ok:hover{
+	background-color: darkgreen
 }
 
 /* 设置 */

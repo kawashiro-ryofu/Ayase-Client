@@ -22,11 +22,12 @@
         <div id="navi">
           <a class="naviobj settings" title="设置" onclick="settings()"><i class="fa fa-cog" aria-hidden="true"></i></a>
           <a class="naviobj refresh" title="刷新" onclick="GetDataFromRemote()"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+          <a class="naviobj nodisturb" title="勿扰"><i class="fa fa-bell" aria-hidden="true"></i></a>
           |
           <span class="naviobj remote-status" title="连接状态">
             <i class="fa fa-server" aria-hidden="true"></i>
             <div class="remote-status" id="remote-status-display">
-              <span class="rs-ico"><i class="fa fw fa-spin fa-circle-o-notch"></i></span>
+              <span class="rs-ico"><i class="fa fa-fw fa-spin fa-circle-o-notch"></i></span>
               <span class="rs-descr">正在连接</span>
             </div>
           </span>
@@ -43,6 +44,30 @@
     <!--<script src="./node_modules/jquery/dist/jquery.min.js"></script>-->
     <script src="./renderer.js"></script>
     <script>
+      
+      setTimeout(async function(){
+          $('#loading').fadeOut()
+          $('#main-wrapper').fadeIn()
+      }, 1000)
+
+      //  #main-wrapper自动回归顶部
+      scrollbackflag = false
+      document.getElementById('main-list').onscroll = function(){
+          if(!scrollbackflag){
+              scrollbackflag = true
+              idnwhat2name = setTimeout(function(){
+                      //以clock锚点为基准
+                      document.getElementById('clock').scrollIntoView({ behavior: 'smooth' });
+                      scrollbackflag = false
+              } ,10000)
+          }
+      }
+
+      // 自定义标题
+      if(LocalSettings.settings.general.customTitle != null&& LocalSettings.settings.general.customTitle.length > 0){
+        $('h1.title').text(LocalSettings.settings.general.customTitle)
+      }
+      // 导航栏 刷新
       var refreshButton = $('a.refresh i')
       refreshButton.on('click', async function(){
         refreshButton.addClass('fa-spin')
@@ -67,6 +92,47 @@
               $('#clock .c_time').html(T)
               $('#clock .c_date').html(D)
       },500)
+
+      // 导航栏 连接状态
+      $('#remote-status-display').on('click',function(){
+        var msgtype = ""
+        switch(localNoticeCache.LSTAT.type){
+          case 'err': msgtype = "error"; break;
+          case 'warn': msgtype = "warning"; break;
+          case 'ok': msgtype = "info"; break;
+        }
+
+        dialog.showMessageBox({title: localNoticeCache.LSTAT.status, type: msgtype, message: `${localNoticeCache.LSTAT.status}\n${localNoticeCache.LSTAT.descr}`})
+      })
+      $('#remote-status-display').hover(function(){
+        // Multi-Language Support Required
+        $('#remote-status-display').attr({'title': "连接状态: " + localNoticeCache.LSTAT.status})
+      })
+
+      // 导航栏 勿扰 按钮
+      setTimeout(function(){
+        function nodisturbIcon(){
+          let f = 'fa '
+          // Multi-Language Support Required
+          let t = '勿扰'
+          if(LocalSettings.settings.noDisturb.enable){
+            t += ': 开'
+            $('.naviobj.nodisturb i').removeClass()
+            $('.naviobj.nodisturb i').addClass(f + 'fa-bell-slash on')
+          }else{
+            t += ': 关'
+            $('.naviobj.nodisturb i').removeClass()
+            $('.naviobj.nodisturb i').addClass(f + 'fa-bell')
+          }
+          $('.naviobj.nodisturb').attr({'title': t})
+        }
+        $('.naviobj.nodisturb').on('click', ()=>{
+          LocalSettings.settings.noDisturb.enable = !LocalSettings.settings.noDisturb.enable
+          nodisturbIcon()
+          LocalSettings.save2fs()
+        })
+        nodisturbIcon()
+      })
     </script>
   </body>
 </html>

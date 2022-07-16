@@ -21,14 +21,12 @@ const log = require('electron-log');
 const { electron } = require("process");
 const { read } = require("fs/promises");
 const xss = require('xss')
+
+// 设置项
 const LocalSettings = require('./settings.js').LocalSettings
+LocalSettings.loadFfs()
 
 shell.config.execPath = shell.which('node').toString()
-
-setTimeout(async function(){
-    $('#loading').fadeOut()
-    $('#main-wrapper').fadeIn()
-}, 1000)
 
 
 // 内建函数
@@ -88,7 +86,6 @@ function FormatDate(dateobj = new Date(), format = "%Y-%m-%d %a", DOW = ["SUN", 
 }
 
 //  新窗口
-//  **将要废弃**
 function NewWin(url, args = ""){
     window.open(url, '_blank', 'minHeight=768,minWidth=1024,autoHideMenuBar=true,nodeIntegration=true,icon=favicon.ico,devTools=false' + args)
 }
@@ -101,6 +98,7 @@ function delHtmlTag(str){
 
 //  UUID生成函数
 //  https://blog.csdn.net/NancyFyn/article/details/115897864
+//  （将要废除）
 function UUID() {
     var s = []
     var hexDigits = '0123456789abcdef'
@@ -264,7 +262,7 @@ function Notice(title, content, publisher, level, pubDate, uuid, description = d
 Notice.prototype = {
     read: false,
     // 阅读器
-    Read: function(){
+    Read: async function(){
         var readerTemplate = require('./templates.js').readerTemplate
 
         readerTemplate = readerTemplate.replaceAll('{{ title }}', this.title)
@@ -276,11 +274,18 @@ Notice.prototype = {
         let filename = path.join(__dirname, `${Math.round(Math.random() * 131072)}.tmp.html`)
         if(!(readAlready.includes(this.uuid)))readAlready[readAlready.length] = this.uuid
         this.read = true
-        fs.writeFile(filename, readerTemplate, { flag: 'w+' }, async function(err){
-            if (err) log.error(`Error Creating temporary file: ${err}`);
-            else setTimeout(function(){NewWin(filename)},750)
+
+        new Promise(function(resolve, reject){
+            fs.writeFileSync(filename, readerTemplate, { flag: 'w+' })
+            resolve()
+        }).then(function(){
+            NewWin(filename)
+        }).catch(function(err){
+            log.error(`Error Creating Temporary File: ${err}`);
+        }).finally(function(){
+            readAlready.save2fs()
         })
-        readAlready.save2fs()
+
     }
 }
 
@@ -349,29 +354,35 @@ function FreshNoticeBar(){
                     title = "通知变动"
                     body += `\n更新时间: ${FormatDate(currentValue.pubDate)}`
                 }
-                function addNotification(){
-                    new Notification(
-                        title,
-                        {
-                            body: body,
-                            icon: "favicon.ico",
-                            silent: true
+
+                // 发送通知的方法
+                // playAudio 播放通知音频（null为不播放，字符串为文件名）
+                function addNotification(playAudio = null, forceIgnoreNoDisturb = false){
+                    // 免打扰过滤
+                    if(!LocalSettings.settings.noDisturb.enable || forceIgnoreNoDisturb){
+                        new Notification(
+                            title,
+                            {
+                                body: body,
+                                icon: "favicon.ico",
+                                silent: true
+                            }
+                        ).onclick = function(){
+                            currentValue.Read()
                         }
-                    ).onclick = function(){
-                        currentValue.Read()
-                    }
+                        if(playAudio != null)new Audio(playAudio).play()
+                        log.info(`Sent Notification: ${currentValue.uuid} `)
+                    }else log.warn('Sending Notification: Banned by no-disturb in settings')
                 }
                 switch(currentValue.level){
                     case 'C':
                         addNotification()
                         break;
                     case 'B':
-                        addNotification()
-                        new Audio('audios/CQ.mp3').play()
+                        addNotification('audios/CQ.mp3')
                         break;
                     case 'A': 
-                        addNotification()
-                        new Audio('audios/CQ.mp3').play()
+                        addNotification('audios/CQ.mp3', true)
                         currentValue.Read()
                         $('#main-list li [id="' + currentValue.id +'"]').removeClass('unread')
                         break;
@@ -379,21 +390,6 @@ function FreshNoticeBar(){
             }
         });
     }, 100)
-
-
-}
-
-//  #main-wrapper自动回归顶部
-scrollbackflag = false
-document.getElementById('main-list').onscroll = function(){
-    if(!scrollbackflag){
-        scrollbackflag = true
-        idnwhat2name = setTimeout(function(){
-                //以clock锚点为基准
-                document.getElementById('clock').scrollIntoView({ behavior: 'smooth' });
-                scrollbackflag = false
-        } ,10000)
-    }
 }
 
 // 主进程 IPC 通信 包装
@@ -408,8 +404,6 @@ function settings(){
     toMainTask('settings')
 }
 
-LocalSettings.loadFfs()
-
 // 本地数据缓存及XHL
 var localNoticeCache = {
     LatestUpdateTime: 0,    /*本地保存的 服务端 最新更新时间 JSON*/
@@ -419,7 +413,18 @@ var localNoticeCache = {
     LUT_XHR: new XMLHttpRequest(),
     // 获取数据用的XHL
     LDT_XHR: new XMLHttpRequest(),
-
+    // 用于显示连接的详细状态
+    LSTAT: {
+        type: null,
+        status: null,
+        descr: null
+    },
+    /* 
+        用于保留上一次更新时LocalSettings.settings中noDisturb的值，
+        在该值不等于settings中的值时执行FreshNoticeBar()，
+        以在勿扰模式关闭后推送被屏蔽的通知
+     */
+    noDisturb: LocalSettings.settings.noDisturb.enable
 }
 
 // 服务器路由：
@@ -482,18 +487,38 @@ async function GetDataFromRemote(){
         // readyState != 4 默认
         var statN = "无法连接"
         var type = "err"
-
+        var descr = "请检查网络"
 
         // 常见HTTP错误 400 403 404 50x
         if(xhr.readyState == 4){
-            if(xhr.status == 400)statN = "无效请求"
-            else if(xhr.status == 403)statN = "鉴权失败"
-            else if(xhr.status == 404)statN = "无此页面"
+            descr = `HTTP ${xhr.status}\n`
+            if(xhr.status == 400){
+                statN = "无效请求"
+                descr += "服务器取法处理该请求"
+            }
+            else if(xhr.status == 403){
+                statN = "鉴权失败"
+                descr += "请检查服务器URL与Token"
+            }
+            else if(xhr.status == 404){
+                statN = "无此页面"
+            }
             else if(parseInt(xhr.status / 100) == 5){
                 statN = `服务端错误${xhr.status}`
                 type = "warn"
+                descr += "请联系服务器管理员"
+            }else if(xhr.status / 100 == 2){
+                if(status == "parsererror"){
+                    statN = "解析错误"
+                    type = "warn"
+                    descr = "请联系服务器管理员"
+                }else{
+                    statN = status
+                    descr = "未知错误"
+                }
             }else{
-                statN = `HTTP错误${xhr.status}`
+                statN = `错误${xhr.status}`
+                descr = "未知错误"
             }
         }
 
@@ -502,11 +527,16 @@ async function GetDataFromRemote(){
         //console.log(status)
 
         log.error(`Connection Failed: ErrorText: ${status}, StatusCode: ${xhr.status}, Step: ${step}`)
-        log.warn('Reconnect after 10 minutes')
-        // 连接错误、失败 的 自动刷新 （延迟10分钟）
+        log.warn('Reconnect after 2 minutes')
+
+        localNoticeCache.LSTAT.status = statN
+        localNoticeCache.LSTAT.type = type
+        localNoticeCache.LSTAT.descr = descr
+
+        // 连接错误、失败 的 自动刷新 （延迟2分钟）
         localNoticeCache.autoRefresh = setTimeout(function(){
             GetDataFromRemote()
-        }, 600000)
+        }, 120000)
     }
 
     // 防止重复操作
@@ -590,8 +620,19 @@ async function GetDataFromRemote(){
                     })
                     FreshNoticeBar()
                     step++
+                    
                 }
                 
+                // Multi-Language Support Required
+                localNoticeCache.LSTAT.status = "在线"
+                localNoticeCache.LSTAT.type = "ok"
+                localNoticeCache.LSTAT.descr = "已经与服务器建立连接"
+
+                // noDisturb 处理
+                if(LocalSettings.settings.noDisturb.enable != localNoticeCache.noDisturb){
+                    if(!LocalSettings.settings.noDisturb.enable && localNoticeCache.noDisturb)FreshNoticeBar()
+                    localNoticeCache.noDisturb = LocalSettings.settings.noDisturb.enable
+                }
                 // 设定 下一次自动刷新
                 localNoticeCache.autoRefresh = setTimeout(function(){
                     GetDataFromRemote()
