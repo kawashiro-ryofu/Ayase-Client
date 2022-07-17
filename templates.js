@@ -1,25 +1,6 @@
-//      侧边栏卡片模板（Notice）
-const notifTemplate = '<li>\
-<div class="card notice {{ unread }}" uuid="{{ uuid }}" id="{{ id }}" style="display:none">\
-  <div class="notic_title"><i class="fa fa-bell" aria-hidden="true"></i> {{ title }}</div>\
-  <div class="notic_descr">{{ description }}</div>\
-  <div class="notic_info">\
-    <i class="fa fa-calendar-o" aria-hidden="true"></i><div>{{ pubDate }}</div><br>\
-    <i class="fa fa-user" aria-hidden="true"></i><div>{{ publisher }}</div>\
-  </div>\
-  <div class="notic_view">\
-    <div><i class="fa fa-arrow-left" aria-hidden="true"></i></div>\
-  </div>\
-  <script>\
-    $(\'[id="{{ id }}"]\').on("click", function(){\
-        $(\'[id="{{ id }}"] .notic_view\').fadeIn();\
-        setTimeout(function(){$(\'[id="{{ id }}"] .notic_view\').fadeOut()}, 3000);\
-        noticeBar[{{ id }}].Read();\
-        $(\'[id="{{ id }}"]\').removeClass(\'unread\')\
-    })\
-  </script>\
-</div>\
-</li>'
+const fs = require('fs')
+const log = require('electron-log')
+const { dialog } = require('electron')
 
 //      阅读器模板
 const readerTemplate = '<!DOCTYPE html>\n'+
@@ -67,8 +48,25 @@ const readerTemplate = '<!DOCTYPE html>\n'+
 '    </div>\n'+
 '</body>\n'
 
+// 文件模板读取
+function useTemplate(file, replacements = new Array){
+  // replacements:
+  //  e.g. replacements = [{key: 'target', value: 'replacement text'}]
+  try{
+    file = path.join(__dirname, 'templates', file)
+    var text = fs.readFileSync(file, {encoding: 'utf-8', flag: 'r'})
+
+    replacements.forEach(function(value, index){
+      text = text.replaceAll(`{{ ${value.key} }}`, value.value)
+    })
+    return text
+  }catch(err){
+    log.error(`Reading Template ${file}: ${err}`)
+    return null
+  }
+}
 
 module.exports = {
-    notifTemplate,
-    readerTemplate
+  readerTemplate,
+  useTemplate
 }

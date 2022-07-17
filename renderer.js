@@ -21,6 +21,7 @@ const log = require('electron-log');
 const { electron } = require("process");
 const { read } = require("fs/promises");
 const xss = require('xss')
+const { useTemplate, readerTemplate } = require('./templates.js')
 
 // 设置项
 const LocalSettings = require('./settings.js').LocalSettings
@@ -263,15 +264,24 @@ Notice.prototype = {
     read: false,
     // 阅读器
     Read: async function(){
+        /*
         var readerTemplate = require('./templates.js').readerTemplate
 
         readerTemplate = readerTemplate.replaceAll('{{ title }}', this.title)
         readerTemplate = readerTemplate.replaceAll('{{ content }}', this.content)
         readerTemplate = readerTemplate.replaceAll('{{ pubDate }}', FormatDate(this.pubDate, '%Y-%m-%d %H:%M') + '')
         readerTemplate = readerTemplate.replaceAll('{{ publisher }}', this.publisher)
-        readerTemplate = readerTemplate.replaceAll('{{ level }}', this.level)
+        readerTemplate = readerTemplate.replaceAll('{{ level }}', this.level)*/
 
-        let filename = path.join(__dirname, `${Math.round(Math.random() * 131072)}.tmp.html`)
+        var readerTemplate = useTemplate('readerTemplate.template',[
+            {key: 'title', value: this.title},
+            {key: 'content', value: this.content},
+            {key: 'pubDate', value: FormatDate(this.pubDate, '%Y-%m-%d %H:%M') + ''},
+            {key: 'publisher', value: this.publisher},
+            {key: 'level', value: this.level}
+        ])
+
+        let filename = path.join(__dirname, 'cache', `${Math.round(Math.random() * 131072)}.tmp.html`)
         if(!(readAlready.includes(this.uuid)))readAlready[readAlready.length] = this.uuid
         this.read = true
 
@@ -279,9 +289,10 @@ Notice.prototype = {
             fs.writeFileSync(filename, readerTemplate, { flag: 'w+' })
             resolve()
         }).then(function(){
-            NewWin(filename)
+            //NewWin(filename)
+            toMainTask('reader', JSON.stringify({filepath: filename}))
         }).catch(function(err){
-            log.error(`Error Creating Temporary File: ${err}`);
+            log.error(`Creating Temporary File: ${err}`);
         }).finally(function(){
             readAlready.save2fs()
         })
@@ -297,19 +308,19 @@ const notifTemplate = require('./templates.js').notifTemplate
 //          notice: Notice对象
 //          eleNum: 元素下标
 function GenNoticeCard(notice){
-    var temporyTemplate = notifTemplate;
-    
-    temporyTemplate = temporyTemplate.replaceAll('{{ uuid }}', notice.uuid)
-    temporyTemplate = temporyTemplate.replaceAll('{{ title }}', notice.title)
-    temporyTemplate = temporyTemplate.replaceAll('{{ description }}', notice.description)
-    temporyTemplate = temporyTemplate.replaceAll('{{ pubDate }}', FormatDate(notice.pubDate, '%Y-%m-%d %H:%M'))
-    temporyTemplate = temporyTemplate.replaceAll('{{ publisher }}', notice.publisher)
-    temporyTemplate = temporyTemplate.replaceAll('{{ id }}', notice.id)
     var unreadClassAttr = "unread"
     if(notice.read)unreadClassAttr = ""
-    temporyTemplate = temporyTemplate.replaceAll('{{ unread }}', unreadClassAttr)
+    return useTemplate('notifTemplate.template', [
+        {key: "uuid", value: notice.uuid}, 
+        {key: "title", value: notice.title},
+        {key: "description", value: notice.description}, 
+        {key: "pubDate", value: FormatDate(notice.pubDate, '%Y-%m-%d %H:%M')},
+        {key: "id", value: notice.id}, 
+        {key: "unread", value: unreadClassAttr},
+        {key: "publisher", value: notice.publisher}
+    ])
 
-    return temporyTemplate
+    
 }
 
 //      通知栏刷新：函数
@@ -441,7 +452,7 @@ async function GetDataFromRemote(){
     //  =2 完成获取数据
     var step = 0;
 
-    // 设置导航栏remote-status框框
+    // 设置导航栏remote-status框
     // type: err/warn/ok/''
     // content: 内容字符串（限制为10字符）
     function setRemoteStatusBandage(type, content){
@@ -475,6 +486,7 @@ async function GetDataFromRemote(){
 
         $('.rs-ico').html(`<i class="${ icon }"></i>`)
         $('.rs-descr').html(content)
+
     }
 
     // 对话框生成
@@ -523,8 +535,6 @@ async function GetDataFromRemote(){
         }
 
         setRemoteStatusBandage(type, statN)
-        //console.log(xhr)
-        //console.log(status)
 
         log.error(`Connection Failed: ErrorText: ${status}, StatusCode: ${xhr.status}, Step: ${step}`)
         log.warn('Reconnect after 2 minutes')

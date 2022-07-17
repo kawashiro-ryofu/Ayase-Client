@@ -1,0 +1,14 @@
+jQuery JavaScript Library v3.6.0
+Released under the MIT license
+
+Font Awesome v4.7.0
+The Font Awesome font is licensed under the SIL OFL 1.1
+Font Awesome CSS, LESS, and Sass files are licensed under the MIT License
+The Font Awesome documentation is licensed under the CC BY 3.0 License
+Attribution is no longer required as of Font Awesome 3.0, but much appreciated
+
+font-awesome-animation v1.1.1
+Released under the MIT license
+
+Remix Icon v2.5.0
+License: Apache 2.0

@@ -7,7 +7,7 @@
 // Modules to control application life and create native browser window
 const {app, BrowserWindow} = require('electron')
 const path = require('path')
-const jquery = require('jquery')
+//const jquery = require('jquery')
 const { ipcMain } = require('electron')
 const { dialog } = require('electron')
 const os = require('os')
@@ -40,7 +40,7 @@ ipcMain.on('asynchronous-message', (event, arg) => {
   // 渲染进程 IPC调用
   var rendererFunc = {
     // 打开设置界面
-    "settings": async function(anchor){
+    "settings": async function(){
       if(!settingsLock){
         settingsLock = true
         const settingsWindow = new BrowserWindow({
@@ -49,6 +49,7 @@ ipcMain.on('asynchronous-message', (event, arg) => {
           minWidth: 640,
           minHeight: 480,
           icon: 'favicon.ico',
+          backgroundColor: '#000000',
           autoHideMenuBar: true,
           webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
@@ -65,12 +66,39 @@ ipcMain.on('asynchronous-message', (event, arg) => {
           log.info('Closed Settings Window')
         })
       }
+    },
+    // 阅读器
+    "reader": function(args){
+      // args:
+      //  e.g. {filepath: "/path/of/page/which/render/export/"}
+      const readerWindow = new BrowserWindow({
+        width: 1024,
+        height: 768,
+        minWidth: 640,
+        minHeight: 480,
+        icon: 'favicon.ico',
+        autoHideMenuBar: true,
+        backgroundColor: '#000000',
+        webPreferences: {
+          /*preload: path.join(__dirname, 'preload.js'),*/
+          contextIsolation: false,
+          nodeIntegration: true
+        },
+      })
+      try{
+        readerWindow.loadFile(args.filepath)
+        readerWindow.on('closed', ()=>{
+          shell.rm(args.filepath)
+        })
+      }catch(err){
+        log.error(`Reader: ${err}`)
+      }
     }
   }
 
   // 解析 渲染器 IPC 接收
   var r = JSON.parse(arg)
-  log.info(`Received IPC ${ r }`)
+
   if(r.argsjson != undefined) rendererFunc[r.command](JSON.parse(r.argsjson))
   else rendererFunc[r.command]()
 
@@ -88,6 +116,7 @@ function sideNBar (scrwidth, scrheight) {
     y: 0,
     minHeight: scrheight,
     minWidth: 300,
+    backgroundColor: '#000000',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: false,
@@ -146,6 +175,7 @@ app.on('will-quit', function(){
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
 
+/*
 setTimeout(function(){
   setInterval(()=>{
     // 删除临时文件
@@ -155,4 +185,4 @@ setTimeout(function(){
     })
 
   }, 10000)
-}, 10000)
+}, 10000)*/

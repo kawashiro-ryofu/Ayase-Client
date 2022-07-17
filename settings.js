@@ -9,14 +9,24 @@
 
 var LocalSettings = {
     // 设置对象
-    settings: null,
-    // 配置文件
-    dir: __dirname,
-    file: "settings.ayase.json",
+    settings: {
+        connections: {
+            serverURL: null,
+            token: null
+        },
+        noDisturb:{
+            enable: false
+        },
+        general: {
+            customTitle: "Ayase"
+        }
+    },
+    // 配置文件位置
+    file: path.join(__dirname, 'settings', "settings.ayase.json"),
     // 从配置文件中读取
     loadFfs: function(){
         if(!fs.existsSync(this.file)){
-            log.warn(`Loading Configuration: Profile does not exist`)
+            log.error(`Loading Configuration: Profile does not exist`)
             // To Do 配置引导
         }else{
             try{
@@ -32,9 +42,10 @@ var LocalSettings = {
         }
     },
     save2fs: async function(){
-            if(!fs.existsSync(this.dir)){
-                log.warn(`Writing Configuration: ${this.dir} does not exist`)
-                fs.mkdirSync(this.dir)
+            console.log(this.file)
+            if(!fs.existsSync(path.parse(this.file).dir)){
+                log.warn(`Writing Configuration: ${path.parse(this.file)} does not exist`)
+                fs.mkdirSync(path.parse(this.file).dir)
                 this.save2fs()
             }else{
                 //  此处感谢Simon的建议，尽管未得到采纳
