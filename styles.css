@@ -9,7 +9,7 @@ body{
 }
 
 a{
-	color: white;
+	color: cyan;
 }
 
 input{
@@ -231,6 +231,7 @@ hr{
 }
 #navi a{
 	margin: 4px;
+	color: white;
 	transition: color, .3s;
 }
 #navi a:hover{

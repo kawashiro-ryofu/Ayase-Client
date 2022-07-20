@@ -8,13 +8,15 @@
 const {app, BrowserWindow} = require('electron')
 const path = require('path')
 //const jquery = require('jquery')
-const { ipcMain } = require('electron')
+
 const { dialog } = require('electron')
 const os = require('os')
 const process = require('node:process')
 const shell = require('shelljs')
 const log = require('electron-log')
 const package = require('./package.json')
+const { error } = require('console')
+const { ipcMain } = require('electron')
 
 // 日志·版权信息
 // <!> 日志规则：仅英文（防止读取日志时出现文字编码问题）
@@ -22,9 +24,22 @@ log.info(`Ayase-Client v${package.version}`)
 log.info(`(C) ${ new Date().getFullYear()} kawashiro-ryofu & the Ayase Developers`)
 log.info(`Licenced Under Mozilla Public License Version 2.0`)
 
+try{
+  Object.assign(console, log.functions);
+}catch(err){
+  log.error(`Initing Log: ${err}`)
+}
+
+try{
+  shell.config.execPath = shell.which('node').toString()
+}catch(err){
+  log.error(`Initing Shelljs: ${err}`)
+}
+
+
 require('@electron/remote/main').initialize();
 
-// 通知修复
+// Win32通知修复
 if (process.platform === 'win32')
 {
     app.setAppUserModelId('Ayase');
@@ -40,7 +55,7 @@ ipcMain.on('asynchronous-message', (event, arg) => {
   // 渲染进程 IPC调用
   var rendererFunc = {
     // 打开设置界面
-    "settings": async function(){
+    settings: async function(){
       if(!settingsLock){
         settingsLock = true
         const settingsWindow = new BrowserWindow({
@@ -68,7 +83,7 @@ ipcMain.on('asynchronous-message', (event, arg) => {
       }
     },
     // 阅读器
-    "reader": function(args){
+    reader: function(args){
       // args:
       //  e.g. {filepath: "/path/of/page/which/render/export/"}
       const readerWindow = new BrowserWindow({
@@ -82,7 +97,8 @@ ipcMain.on('asynchronous-message', (event, arg) => {
         webPreferences: {
           /*preload: path.join(__dirname, 'preload.js'),*/
           contextIsolation: false,
-          nodeIntegration: true
+          nodeIntegration: true,
+          devTools: false
         },
       })
       try{
@@ -92,6 +108,24 @@ ipcMain.on('asynchronous-message', (event, arg) => {
         })
       }catch(err){
         log.error(`Reader: ${err}`)
+      }
+    },
+    run: function(args){
+      // args:
+      //  cmd 要运行的程序、网页、命令
+      try{
+        switch(process.platform){
+          case "darwin":
+            shell.exec(`open ${ args.cmd }`)
+            break;
+          case "win32":
+            shell.exec(`start ${ args.cmd }`)
+            break;
+          default:
+            shell.exec(`xdg-open ${ args.cmd }`)
+        }
+      }catch(err){
+        log.error(`Calling Shell: ${err}`)
       }
     }
   }
@@ -121,7 +155,7 @@ function sideNBar (scrwidth, scrheight) {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: false,
       nodeIntegration: true,
-      /*devTools: false*/
+      /*devTools: true*/
     },
     frame: false,
     minimizable: false,
@@ -138,11 +172,24 @@ function sideNBar (scrwidth, scrheight) {
   log.info(`Loaded Sidebar Window`)
   //mainWindow.setSkipTaskbar(true)
   // Open the DevTools.
-  // mainWindow.webContents.openDevTools()
+  mainWindow.webContents.openDevTools()
 
   require("@electron/remote/main").enable(mainWindow.webContents)
-}
 
+  // 崩溃处理
+  mainWindow.webContents.on('crash', function(){
+    // 
+    const options = {
+      type: 'error',
+      title: '进程崩溃了',
+      message: '这个进程已经崩溃.',
+      buttons: ['重载', '退出'],
+    };    
+    dialog.showMessageBox(options)
+   
+    //
+  })
+}
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -186,3 +233,20 @@ setTimeout(function(){
 
   }, 10000)
 }, 10000)*/
+
+process.on('uncaughtException', async function(error){
+  var title = 'Unexpected Error Occurred'
+  var content = title + `: ${error.toString()}`
+  log.error(content)
+  dialog.showErrorBox({
+    title: title,
+    content: content
+  })
+})
+
+// 全局异常处理测试
+/*
+setTimeout(()=>{
+  throw 'Error Test';
+},10000)
+*/

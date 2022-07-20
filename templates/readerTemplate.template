@@ -1,18 +1,18 @@
 <!DOCTYPE html>
 <head>
     <meta charset="utf-8">
-    <link href="../styles.css" rel="stylesheet">
-    <link href='../static/css/font-awesome/css/font-awesome.min.css' rel="stylesheet">
+    <link href="{{ __dirname }}/styles.css" rel="stylesheet">
+    <link href='{{ __dirname }}/static/css/font-awesome/css/font-awesome.min.css' rel="stylesheet">
     <title>{{ title }}</title>
 </head>
 <body>
-	<script>
-        window.$ = window.jQuery = require('jquery');
-	</script>
     <style>
         body{
             overflow-y: auto;
             overflow-x: inherit;
+        }
+        a{
+            color: cyan;
         }
         #main-wrapper{
             display: block;
@@ -43,5 +43,28 @@
         </div>
         <hr>
         <div id="read_notic_content">{{ content }}</div>
+        <script>
+            const { ipcMain } = require('electron')
+            // 主进程 IPC 通信 包装
+			function toMainTask(command, argsjson){
+				const { ipcRenderer } = require('electron')
+				var x = {"command": command, "argsjson": argsjson}
+				ipcRenderer.send('asynchronous-message', JSON.stringify(x))
+			}
+            function openLinkByBrowser(url){
+				toMainTask('run', JSON.stringify({cmd: url}))
+            }
+
+            var x = document.getElementsByTagName('a')
+            let urlregexp = /^(?:(http|https):\/\/)?((?:[\w-]+\.)+[a-z0-9]+)((?:\/[^/?#]*)+)?(\?[^#]+)?(#.+)?$/gi;
+
+            for(var a = 0; a < x.length; a++){
+				//	过滤非url内容，防止XSS
+				if(urlregexp.test(x[0].getAttribute('href')))x[0].setAttribute('onclick', `openLinkByBrowser('${x[0].getAttribute('href')}')`)
+                else x[0].setAttribute('onclick', ``)
+                //	在外部浏览器打开
+                x[0].setAttribute('href', '#')
+            }
+        </script>
     </div>
 </body>

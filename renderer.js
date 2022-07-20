@@ -17,21 +17,22 @@ const dialog = require('@electron/remote').dialog
 const os = require('os')
 const path = require('path')
 const shell = require('shelljs');
-const log = require('electron-log');
 const { electron } = require("process");
 const { read } = require("fs/promises");
+const { ipcMain } = require('electron')
 const xss = require('xss')
-const { useTemplate, readerTemplate } = require('./templates.js')
+const { useTemplate } = require('./templates.js')
+const log = require('electron-log')
 
-// 设置项
-const LocalSettings = require('./settings.js').LocalSettings
-LocalSettings.loadFfs()
-
-shell.config.execPath = shell.which('node').toString()
-
+// 主进程 IPC 通信 包装
+function toMainTask(command, argsjson){
+    const { ipcRenderer } = require('electron')
+    var x = {"command": command, "argsjson": argsjson}
+    ipcRenderer.send('asynchronous-message', JSON.stringify(x))
+}
 
 // 内建函数
-
+//
 //  日期时间格式化函数
 //  dateobj: Date对象
 //  format: 格式（字符串）
@@ -86,143 +87,17 @@ function FormatDate(dateobj = new Date(), format = "%Y-%m-%d %a", DOW = ["SUN", 
     return format
 }
 
-//  新窗口
-function NewWin(url, args = ""){
-    window.open(url, '_blank', 'minHeight=768,minWidth=1024,autoHideMenuBar=true,nodeIntegration=true,icon=favicon.ico,devTools=false' + args)
-}
-
 //  去除HTML标签
 //  https://blog.csdn.net/xuzengqiang2/article/details/41979733
 function delHtmlTag(str){
     return str.replace(/<[^>]+>/g,"");//去掉所有的html标记
 } 
 
-//  UUID生成函数
-//  https://blog.csdn.net/NancyFyn/article/details/115897864
-//  （将要废除）
-function UUID() {
-    var s = []
-    var hexDigits = '0123456789abcdef'
-    for (var i = 0; i < 36; i++) {
-      s[i] = hexDigits.substr(Math.floor(Math.random() * 0x10), 1)
-    }
-    s[14] = '4' // bits 12-15 of the time_hi_and_version field to 0010
-    s[19] = hexDigits.substr((s[19] & 0x3) | 0x8, 1) // bits 6-7 of the clock_seq_hi_and_reserved to 01
-    s[8] = s[13] = s[18] = s[23] = '-'
-  
-    var uuid = s.join('')
-    return uuid
-  }
-
-//  通知
-
-//      通知栏：数组
-//      数组元素为Notice对象
-var noticeBar = []
-//      已读通知UUID数组及路径
-var readAlready = []
-readAlready.dir = path.join(__dirname, 'cache')
-readAlready.file = path.join(readAlready.dir, 'readAlredy')
-
-//      保存readAlready数组至文件系统
-readAlready.save2fs = function(){
-    if(!fs.existsSync(this.dir)){
-        log.warn(`Writing readAlredy Cache: ${this.dir} does not exist`)
-        fs.mkdirSync(this.dir)
-        this.save2fs()
-    }else{
-        fs.writeFile(this.file, 
-            JSON.stringify(Array.from(this)),        /*readAlready因为往prototype加入了一些“东西”所以变成了数组*/
-            'utf-8',
-            function(error){
-                if(error)log.error(`Writing readAlredy Cache: ${error}`)
-                else log.info(`Wrote readAlredy Cache: ${readAlready.file}`)
-            }
-        )
-    }
-}
-//      readAlready 从文件系统读取
-readAlready.loadFfs = function(){
-
-    if(!fs.existsSync(this.dir)){
-        log.warn(`Loading readAlredy Cache: ${this.dir} does not exist`)
-        fs.mkdirSync(this.dir)
-        this.save2fs()
-        
-    }
-    else if(!fs.existsSync(this.file)){
-        log.warn(`Loading readAlredy Cache: ${this.file} does not exist`)
-        this.save2fs()
-        
-    }
-    else{
-        try{
-            var f = fs.readFileSync(this.file, {encoding: 'utf-8', flag: 'r'})
-            log.info(`Loaded readAlredy Cache: ${this.file} `)
-            var outdat = JSON.parse(f.toString())
-            for(var c = 0, len = outdat.length; c < len; c++){
-                if(!Array.from(this).includes(outdat[c]))this.push(outdat[c])
-            }
-        }catch(err){
-            if(err){
-                log.error('Loading Cache readAlredy: '+err)
-            }
-        }finally{
-            this.sync()
-        }
-        
-    }
-}
-//      同步reaadAlready与noticeBar
-readAlready.sync = function(){
-    var saveInneed = false
-    log.info('Syncing readAlready to noticeBar')
-    //  去重
-    for(var c = 0, lenc = this.length; c < lenc; c++){
-        for(var d = 0, lend = this.length; d < lend; d++){
-            if(c != d && this[c] == this[d]){
-                    delete(this[d])
-            }
-        }
-    }
-        var tmp = []
-        for(var c = 0, lenc = this.length; c < lenc; c++){
-            if(this[c] != undefined){
-                tmp.push(this[c])
-            }
-        }
-        this.length = 0
-        for(var c = 0, lenc = tmp.length; c < lenc; c++)this[c] = tmp[c]
-
-    //  应用至noticeBar数组
-    for(var c = 0, lenc = noticeBar.length; c < lenc; c++){
-        for(var d = 0, lend = this.length; c < lend; c++){
-            if(/[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}/gi.test(this[d]) == false){
-                delete this[d]
-                this[this.length] = this[d]
-            }else{
-                if(noticeBar[c].uuid == this[d]){
-                    noticeBar[c].read = true
-                }
-                if((noticeBar[c].read == false && this.includes(noticeBar[c].uuid)) || (noticeBar[c].read && !this.includes(noticeBar[c].uuid))){
-                    this.push(noticeBar[c].uuid)
-                    noticeBar[c].read = true
-                    saveInneed = true
-                }
-            }
-        }
-    }
-    if(saveInneed)this.save2fs()
-}
-
-//  读取readAlready至文件系统
-readAlready.loadFfs()
-
 //      通知：对象
 function Notice(title, content, publisher, level, pubDate, uuid, description = delHtmlTag(content)){
     this.title = xss(title); /* 标题 */
     this.content = xss(content); /* 正文 */
-    this.description = xss(description); /* 描述 */ 
+    this.description = delHtmlTag(description); /* 描述 */ 
     this.publisher = xss(publisher); /* 发布者 */
     this.pubDate = pubDate; /* 发布时间（Date对象） */
     this.uuid = xss(uuid); /* （远端服务器）UUID */
@@ -260,19 +135,13 @@ function Notice(title, content, publisher, level, pubDate, uuid, description = d
 
 }
 
+// 操作系统的路径格式转换为web路径格式
+//function ospath2webpath()
+
 Notice.prototype = {
     read: false,
     // 阅读器
     Read: async function(){
-        /*
-        var readerTemplate = require('./templates.js').readerTemplate
-
-        readerTemplate = readerTemplate.replaceAll('{{ title }}', this.title)
-        readerTemplate = readerTemplate.replaceAll('{{ content }}', this.content)
-        readerTemplate = readerTemplate.replaceAll('{{ pubDate }}', FormatDate(this.pubDate, '%Y-%m-%d %H:%M') + '')
-        readerTemplate = readerTemplate.replaceAll('{{ publisher }}', this.publisher)
-        readerTemplate = readerTemplate.replaceAll('{{ level }}', this.level)*/
-
         var readerTemplate = useTemplate('readerTemplate.template',[
             {key: 'title', value: this.title},
             {key: 'content', value: this.content},
@@ -281,7 +150,7 @@ Notice.prototype = {
             {key: 'level', value: this.level}
         ])
 
-        let filename = path.join(__dirname, 'cache', `${Math.round(Math.random() * 131072)}.tmp.html`)
+        let filename = path.join(usrdir.rendercache, `${Math.round(Math.random() * 131072)}.tmp.html`)
         if(!(readAlready.includes(this.uuid)))readAlready[readAlready.length] = this.uuid
         this.read = true
 
@@ -289,7 +158,6 @@ Notice.prototype = {
             fs.writeFileSync(filename, readerTemplate, { flag: 'w+' })
             resolve()
         }).then(function(){
-            //NewWin(filename)
             toMainTask('reader', JSON.stringify({filepath: filename}))
         }).catch(function(err){
             log.error(`Creating Temporary File: ${err}`);
@@ -299,10 +167,6 @@ Notice.prototype = {
 
     }
 }
-
-
-//      通知：前端模板
-const notifTemplate = require('./templates.js').notifTemplate
 
 //      从模板生成.card .notify片段
 //          notice: Notice对象
@@ -333,16 +197,15 @@ function FreshNoticeBar(){
 
     readAlready.sync()
 
-    //      去除非object数据（如"undefined"）
-    //      （参考https://blog.csdn.net/qq_33769914/article/details/82380957）
-    for(var i = 0; i < noticeBar.length; i++) {
+    for(var i = 0, len = noticeBar.length; i < len; i++) {
         if(typeof(noticeBar[i]) != "object") {
             delete(noticeBar[i])
             noticeBar.splice(i,1);
             i = i - 1;
         }
     }
-
+    
+    // BUG
     for(var i = 0; i < temporyNoticeBar.length; i++) {
         if(typeof(temporyNoticeBar[i]) != "object") {
             delete(temporyNoticeBar[i])
@@ -403,47 +266,12 @@ function FreshNoticeBar(){
     }, 100)
 }
 
-// 主进程 IPC 通信 包装
-function toMainTask(command, argsjson){
-    const { ipcRenderer } = require('electron')
-    var x = {"command": command, "argsjson": argsjson}
-    ipcRenderer.send('asynchronous-message', JSON.stringify(x))
-}
-
-// （主进程）调出设置
-function settings(){
-    toMainTask('settings')
-}
-
-// 本地数据缓存及XHL
-var localNoticeCache = {
-    LatestUpdateTime: 0,    /*本地保存的 服务端 最新更新时间 JSON*/
-    LatestData: {},         /*本地保存的 最新数据（通知列表）*/
-    GetDataLock: false,     /*刷新操作 锁定*/
-    // 获取最新更新时间用的XHL
-    LUT_XHR: new XMLHttpRequest(),
-    // 获取数据用的XHL
-    LDT_XHR: new XMLHttpRequest(),
-    // 用于显示连接的详细状态
-    LSTAT: {
-        type: null,
-        status: null,
-        descr: null
-    },
-    /* 
-        用于保留上一次更新时LocalSettings.settings中noDisturb的值，
-        在该值不等于settings中的值时执行FreshNoticeBar()，
-        以在勿扰模式关闭后推送被屏蔽的通知
-     */
-    noDisturb: LocalSettings.settings.noDisturb.enable
-}
-
 // 服务器路由：
 //  /:token/LatestUpdateDate -> (json)最新发布时间 <UNIX时间戳>
 //  /:token/NoticesList -> (json)适用于本机的所有通知列表
 
 //  更新数据
-async function GetDataFromRemote(){
+function GetDataFromRemote(){
     
     // 取消先前设定的 下一次自动刷新的 延迟
     clearTimeout(localNoticeCache.autoRefresh)
@@ -455,6 +283,7 @@ async function GetDataFromRemote(){
     // 设置导航栏remote-status框
     // type: err/warn/ok/''
     // content: 内容字符串（限制为10字符）
+    
     function setRemoteStatusBandage(type, content){
         // 移除 #remote-status 原有的类并插入相应的CSS类
         $('#remote-status-display').removeClass('err')
@@ -551,7 +380,7 @@ async function GetDataFromRemote(){
 
     // 防止重复操作
     if(!localNoticeCache.GetDataLock){
-        log.info('Fetching: Latest Update Time')
+        //log.info('Fetching: Latest Update Time')
         localNoticeCache.GetDataLock = true
         // 获取 最新更新时间 以确定是否需要更新数据
         localNoticeCache.LUT_XHR = $.ajax({
@@ -560,7 +389,7 @@ async function GetDataFromRemote(){
             dataType: 'json',
             error: (xhr, status, error)=>{ConnErr(xhr, status, error)},
             success:function(data){
-                log.info('Fetched: Latest Update Time')
+                //log.info('Fetched: Latest Update Time')
                 if(localNoticeCache.LatestUpdateTime <= data.LatestUpdateDate){
                     localNoticeCache.LatestUpdateTime = data.LatestUpdateDate
                     fetchNoticeData()
@@ -576,14 +405,14 @@ async function GetDataFromRemote(){
 
 
     function fetchNoticeData(){
-        log.info('Fetching: Notice Data')
+        //log.info('Fetching: Notice Data')
         localNoticeCache.LDT_XHR =  $.ajax({
             type: 'GET',
             url: LocalSettings.settings.connections.serverURL + '/' + LocalSettings.settings.connections.token + '/NoticesList',
             dataType: 'json',
             error:  (xhr, status, error)=>{ConnErr(xhr, status, error)},
             success:async function(data){
-                log.info('Fetched: Notice Data')
+                //log.info('Fetched: Notice Data')
 
                 // Multi-Language Support Required
                 setRemoteStatusBandage('ok', '在线')
@@ -652,6 +481,191 @@ async function GetDataFromRemote(){
         })
     }
 }
+
+
+//  初始化
+
+//  日志 绑定console
+try{
+    Object.assign(console, log.functions);
+}catch(err){
+    log.error(`Initing Log: ${err}`)
+}
+
+//  shell 命令执行
+try{
+    shell.config.execPath = shell.which('node').toString()
+}catch(err){
+    log.error(`Initing Shelljs: ${err}`)
+}
+
+
+//  用户目录
+
+var usrdir = {
+    rundir: __dirname,
+    home: process.env.USERPROFILE || process.env.HOME,
+}
+usrdir.usrdir = path.join(usrdir.home, '.ayase')
+if(!fs.existsSync(usrdir.usrdir)){
+    log.warn(`Initing User Directory: Does not exist`)
+    try{
+        fs.mkdirSync(usrdir.usrdir)
+    }catch(err){
+        log.error(`Creating User Directory: ${err}`)
+    }
+}
+usrdir.rendercache = path.join(usrdir.usrdir, 'rendercache')
+usrdir.settings = path.join(usrdir.usrdir, 'settings')
+usrdir.templates = path.join(usrdir.rundir, 'templates')
+
+// 设置项
+
+try{
+    const settings = require('./settings.js')
+    var LocalSettings = new settings.LocalSettings(usrdir.settings)
+    LocalSettings.loadFfs()
+}catch(err){
+    log.error(`Initing Settings Profile: ${err}`)
+}
+
+// 本地数据缓存及XHL
+var localNoticeCache = {
+    LatestUpdateTime: 0,    /*本地保存的 服务端 最新更新时间 JSON*/
+    LatestData: {},         /*本地保存的 最新数据（通知列表）*/
+    GetDataLock: false,     /*刷新操作 锁定*/
+    // 获取最新更新时间用的XHL
+    LUT_XHR: new XMLHttpRequest(),
+    // 获取数据用的XHL
+    LDT_XHR: new XMLHttpRequest(),
+    // 用于显示连接的详细状态
+    LSTAT: {
+        type: null,
+        status: null,
+        descr: null
+    },
+    /* 
+        用于保留上一次更新时LocalSettings.settings中noDisturb的值，
+        在该值不等于settings中的值时执行FreshNoticeBar()，
+        以在勿扰模式关闭后推送被屏蔽的通知
+     */
+    noDisturb: LocalSettings.settings.noDisturb.enable
+}
+
+//  通知
+
+//      通知侧边栏：数组
+//      数组元素为Notice对象
+var noticeBar = []
+
+//      已读通知UUID数组及路径
+var readAlready = []
+readAlready.dir = usrdir.rendercache
+readAlready.file = path.join(readAlready.dir, 'readAlredy')
+
+//      保存readAlready数组至文件系统
+readAlready.save2fs = function(){
+    
+    if(!fs.existsSync(this.dir)){
+        log.warn(`Writing readAlredy Cache: ${this.dir} does not exist`)
+        try{
+            fs.mkdirSync(this.dir)
+            //this.save2fs()
+        }catch(err){
+            log.error(`Creating rendercache Directory: ${err}`)
+        }
+    }else{
+        fs.writeFile(this.file, 
+            //readAlready因为往prototype加入了一些“东西”所以变成了数组
+            JSON.stringify(Array.from(this)),        
+            'utf-8',
+            function(error){
+                if(error)log.error(`Writing readAlredy Cache: ${error}`)
+                else log.info(`Wrote readAlredy Cache`)
+            }
+        )
+    }
+}
+//      readAlready 从文件系统读取
+readAlready.loadFfs = function(){
+    
+    if(!fs.existsSync(this.dir)){
+        log.warn(`Loading readAlredy Cache: ${this.dir} does not exist`)
+        fs.mkdirSync(this.dir)
+        this.save2fs()
+        
+    }
+    else if(!fs.existsSync(this.file)){
+        log.warn(`Loading readAlredy Cache: ${this.file} does not exist`)
+        this.save2fs()
+        
+    }
+    else{
+        try{
+            var f = fs.readFileSync(this.file, {encoding: 'utf-8', flag: 'r'})
+            log.info(`Loaded readAlredy Cache: ${this.file} `)
+            var outdat = JSON.parse(f.toString())
+            for(var c = 0, len = outdat.length; c < len; c++){
+                if(!Array.from(this).includes(outdat[c]))this.push(outdat[c])
+            }
+        }catch(err){
+            if(err){
+                log.error('Loading Cache readAlredy: '+err)
+            }
+        }finally{
+            this.sync()
+        }
+        
+    }
+}
+//      同步reaadAlready与noticeBar
+readAlready.sync = function(){
+    var saveInneed = false
+    log.info('Syncing readAlready to noticeBar')
+    
+    //  去重
+    for(var c = 0, lenc = this.length; c < lenc; c++){
+        for(var d = 0, lend = this.length; d < lend; d++){
+            if(c != d && this[c] == this[d]){
+                    delete(this[d])
+            }
+        }
+    }
+        var tmp = []
+        for(var c = 0, lenc = this.length; c < lenc; c++){
+            if(this[c] != undefined){
+                tmp.push(this[c])
+            }
+        }
+        this.length = 0
+        for(var c = 0, lenc = tmp.length; c < lenc; c++)this[c] = tmp[c]
+
+    //  应用至noticeBar数组
+    for(var c = 0, lenc = noticeBar.length; c < lenc; c++){
+        for(var d = 0, lend = this.length; c < lend; c++){
+            if(/[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}/gi.test(this[d]) == false){
+                delete this[d]
+                this[this.length] = this[d]
+            }else{
+                if(noticeBar[c].uuid == this[d]){
+                    noticeBar[c].read = true
+                }
+                if((noticeBar[c].read == false && this.includes(noticeBar[c].uuid)) || (noticeBar[c].read && !this.includes(noticeBar[c].uuid))){
+                    this.push(noticeBar[c].uuid)
+                    noticeBar[c].read = true
+                    saveInneed = true
+                }
+            }
+        }
+    }
+    if(saveInneed)this.save2fs()
+}
+
+//  读取readAlready至文件系统
+readAlready.loadFfs()
+
+//      通知：前端模板
+const notifTemplate = require('./templates.js').notifTemplate
 
 GetDataFromRemote()
 
