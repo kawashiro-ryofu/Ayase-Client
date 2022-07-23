@@ -1,2 +1,34 @@
 <!--侧边栏卡片模板(Notice)-->
-<li><div class="card notice {{ unread }}" uuid="{{ uuid }}" id="{{ id }}" style="display:none">  <div class="notic_title"><i class="fa fa-bell" aria-hidden="true"></i> {{ title }}</div>  <div class="notic_descr">{{ description }}</div>  <div class="notic_info">    <i class="fa fa-calendar-o" aria-hidden="true"></i><div>{{ pubDate }}</div><br>    <i class="fa fa-user" aria-hidden="true"></i><div>{{ publisher }}</div>  </div>  <div class="notic_view">    <div><i class="fa fa-arrow-left" aria-hidden="true"></i></div>  </div>  <script>    $('[id="{{ id }}"]').on("click", function(){        $('[id="{{ id }}"] .notic_view').fadeIn();        setTimeout(function(){$('[id="{{ id }}"] .notic_view').fadeOut()}, 3000);        noticeBar[{{ id }}].Read();        $('[id="{{ id }}"]').removeClass('unread')    })  </script></div></li>
+<li>
+  <div class="card notice {{ unread }}" uuid="{{ uuid }}" id="{{ id }}" style="display:none">
+    <div class="notic_title">
+      <i class="fa fa-bell" aria-hidden="true">
+      </i>{{ title }}</div>
+    <div class="notic_descr">{{ description }}</div>
+    <div class="notic_info">
+      <i class="fa fa-calendar-o" aria-hidden="true">
+      </i>
+      <div>{{ pubDate }}</div>
+      <br>
+      <i class="fa fa-user" aria-hidden="true">
+      </i>
+      <div>{{ publisher }}</div>
+    </div>
+    <div class="notic_view">
+      <div>
+        <i class="fa fa-arrow-left" aria-hidden="true">
+        </i>
+      </div>
+    </div>
+    <script>
+    $('[uuid="{{ uuid }}"]').on("click", function(){
+        $('[uuid="{{ uuid }}"] .notic_view').fadeIn();
+        setTimeout(function(){
+            $('[uuid="{{ uuid }}"] .notic_view').fadeOut()
+        }, 3000);
+        noticeBar[{{ id }}].Read();
+        $('[uuid="{{ uuid }}"]').removeClass('unread')
+    })
+    </script>
+  </div>
+</li>

@@ -7,7 +7,8 @@
     <link href="styles.css" rel="stylesheet">
     <link href='./static/css/font-awesome/css/font-awesome.min.css' rel="stylesheet">
     <link href='./static/css/font-awesome-animation/css/font-awesome-animation.min.css' rel="stylesheet">
-    <!--<script type="text/javascript" scr="static/js/jquery/jquery.min.js"></script>-->
+    <link href="./static/js/js-snackbar-1.5/dist/js-snackbar.min.css" rel="stylesheet">
+    <script type="text/javascript" scr="./static/js/jquery/jquery.min.js"></script>
     <title>Ayase</title>
   </head>
   <body>
@@ -20,7 +21,7 @@
         <h1 class="title">Ayase</h1>
         <div id="navi">
           <a class="naviobj settings" title="设置" onclick="toMainTask('settings')"><i class="fa fa-cog" aria-hidden="true"></i></a>
-          <a class="naviobj refresh" title="刷新" onclick="GetDataFromRemote()"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+          <a class="naviobj refresh" title="刷新" onclick="LocalSettings.loadFfs();GetDataFromRemote()"><i class="fa fa-refresh" aria-hidden="true"></i></a>
           <a class="naviobj nodisturb" title="勿扰"><i class="fa fa-bell" aria-hidden="true"></i></a>
           |
           <span class="naviobj remote-status" title="连接状态">
@@ -42,12 +43,19 @@
 
     <!--<script src="./node_modules/jquery/dist/jquery.min.js"></script>-->
     <script src="./renderer.js"></script>
+    <script src="./static/js/js-snackbar-1.5/dist/js-snackbar.min.js"></script>
     <script>
       
       setTimeout(async function(){
           $('#loading').fadeOut()
           $('#main-wrapper').fadeIn()
       }, 1000)
+
+      //  版本号展示
+      SnackBar({
+          message: "Ayase "+ require('./package.json').version, 
+          position: 'bl', 
+          status: 'info'})
 
       //  #main-wrapper自动回归顶部
       scrollbackflag = false
@@ -110,7 +118,7 @@
 
       // 导航栏 勿扰 按钮
       setTimeout(function(){
-        function nodisturbIcon(){
+        function nodisturbIcon(showSnack = true){
           let f = 'fa '
           // Multi-Language Support Required
           let t = '勿扰'
@@ -124,13 +132,14 @@
             $('.naviobj.nodisturb i').addClass(f + 'fa-bell')
           }
           $('.naviobj.nodisturb').attr({'title': t})
+          if(showSnack)SnackBar({message: t, position: 'tr', status: 'success'})
         }
         $('.naviobj.nodisturb').on('click', ()=>{
           LocalSettings.settings.noDisturb.enable = !LocalSettings.settings.noDisturb.enable
           nodisturbIcon()
           LocalSettings.save2fs()
         })
-        nodisturbIcon()
+        nodisturbIcon(false)
       })
     </script>
   </body>
