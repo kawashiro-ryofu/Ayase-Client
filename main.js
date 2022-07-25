@@ -54,8 +54,13 @@ ipcMain.on('asynchronous-message', (event, arg) => {
 
   // 渲染进程 IPC调用
   var rendererFunc = {
-    // 打开设置界面
-    settings: async function(){
+
+    // 打开<del>设置界面</del>  配置文件
+    //  to-do 设置界面
+    settings: function(){
+
+
+    /*async function(){
       if(!settingsLock){
         settingsLock = true
         const settingsWindow = new BrowserWindow({
@@ -79,8 +84,8 @@ ipcMain.on('asynchronous-message', (event, arg) => {
         settingsWindow.on('closed',()=>{
           settingsLock = false
           log.info('Closed Settings Window')
-        })
-      }
+        })*/
+        
     },
     // 阅读器
     reader: function(args){

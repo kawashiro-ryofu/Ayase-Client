@@ -222,12 +222,14 @@ function FreshNoticeBar(){
         noticeBar[min] = tmp
     }
     noticeBar = noticeBar.reverse()
+    for(var a = 0; a < noticeBar.length; a++)noticeBar[a].id = a
 
     // 通知
     setTimeout(function () {
         var hasNew = false
         noticeBar.forEach(function (currentValue, index) {
-
+            $('#main-list').append(GenNoticeCard(currentValue, index));
+            //console.log(currentValue, index)
             // Multi-Language Support Required
             if(currentValue.read != true || currentValue.update){
 
@@ -282,15 +284,14 @@ function FreshNoticeBar(){
                         break;
                 }
             }
-            $('#main-list').append(GenNoticeCard(currentValue, index));
             $('#main-list li .card').slideDown()
         });
     }, 100)
 }
 
 // 服务器路由：
-//  /:token/LatestUpdateDate -> (json)最新发布时间 <UNIX时间戳>
-//  /:token/NoticesList -> (json)适用于本机的所有通知列表
+//  /query/:token/LatestUpdateDate -> (json)最新发布时间 <UNIX时间戳>
+//  /query/:token/NoticesList -> (json)适用于本机的所有通知列表
 
 //  抓取数据
 function GetDataFromRemote(){
@@ -414,7 +415,7 @@ function GetDataFromRemote(){
         // 获取 最新更新时间 以确定是否需要更新数据
         localNoticeCache.LUT_XHR = $.ajax({
             type: 'GET',
-            url: LocalSettings.settings.connections.serverURL + '/' + LocalSettings.settings.connections.token + '/LatestUpdateDate',
+            url: LocalSettings.settings.connections.serverURL + '/query/' + LocalSettings.settings.connections.token + '/LatestUpdateDate',
             dataType: 'json',
             error: (xhr, status, error)=>{ConnErr(xhr, status, error)},
             success:function(data){
@@ -438,7 +439,7 @@ function GetDataFromRemote(){
         //log.info('Fetching: Notice Data')
         localNoticeCache.LDT_XHR =  $.ajax({
             type: 'GET',
-            url: LocalSettings.settings.connections.serverURL + '/' + LocalSettings.settings.connections.token + '/NoticesList',
+            url: LocalSettings.settings.connections.serverURL + '/query/' + LocalSettings.settings.connections.token + '/NoticesList',
             dataType: 'json',
             error:  (xhr, status, error)=>{ConnErr(xhr, status, error)},
             success:async function(data){
