@@ -26,6 +26,8 @@ class LocalSettings{
         if(!fs.existsSync(this.file)){
             log.error(`Loading Configuration: Profile does not exist`)
             // To Do 配置引导
+            //  写入一个初始配置文件
+            this.save2fs()
         }else{
             try{
                 var f = fs.readFileSync(this.file, {encoding: 'utf-8', flag: 'r'})
@@ -48,7 +50,7 @@ class LocalSettings{
         }else{
             //  此处感谢Simon的建议
             fs.writeFile(this.file, 
-                JSON.stringify({settings: this.settings}),        
+                JSON.stringify({settings: this.settings}, null, 4),        
                 'utf-8',
                 function(error){
                     if(error)log.error(`Writing Configuration: ${error}`)
