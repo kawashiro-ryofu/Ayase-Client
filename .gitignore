@@ -1,3 +1,2 @@
-node_modules
-*.tmp.html
-cache
+dist/
+node_modules/

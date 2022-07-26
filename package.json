@@ -1,15 +1,41 @@
 {
   "name": "Ayase-Client",
   "version": "0.0.0",
-  "description": "Frontend application of Ayase group notice system",
+  "description": "Client of Ayase group notice system",
   "main": "main.js",
   "scripts": {
     "start": "electron main.js"
   },
   "author": "kawashiro-ryofu",
   "license": "MPL-2.0",
+  "bulid":{
+	"productName": "Ayase-Client",
+	"appId": "yay.bkryofu.whoIsCommunist.wrote.ayaseClient",
+	"copyright": "©2022 kawashiro-ryofu  & the Ayase developers. All Rights Reserved. Licensed Under MPL-2.0.",
+	"directories":{
+		"output": "dist"
+	},
+	"files": ["dist/electron/**/*"],
+	"nsis": {
+		"oneClick": false,
+		"allowElevation": true,
+		"allowToChangeInstallationDirectory": true,
+		"installerHeaderIcon": "./favicon.ico",
+		"createDesktopShortcut": false,
+		"createStartMenuShortcut": true,
+		"shortcutName": "Ayase Client"
+	},
+	"win": {
+		"icon": "./favicon.ico",
+		"target": [{
+			"target": "nsis",
+			"arch": ["ia32"]
+		}]
+	}
+  },
   "devDependencies": {
-    "electron": "^17.4.10"
+    "electron": "^17.4.10",
+    "electron-builder": "^23.1.0"
   },
   "dependencies": {
     "@electron/remote": "^2.0.8",
