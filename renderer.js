@@ -420,7 +420,10 @@ function GetDataFromRemote(){
             error: (xhr, status, error)=>{ConnErr(xhr, status, error)},
             success:function(data){
                 //log.info('Fetched: Latest Update Time')
-                if(localNoticeCache.LatestUpdateTime <= data.LatestUpdateDate){
+                localNoticeCache.LatestUpdateTime = parseInt(localNoticeCache.LatestUpdateTime)
+                data.LatestUpdateDate = parseInt(data.LatestUpdateDate)
+                if(localNoticeCache.LatestUpdateTime < data.LatestUpdateDate){
+                    console.log(localNoticeCache.LatestUpdateTime, data.LatestUpdateDate)
                     localNoticeCache.LatestUpdateTime = data.LatestUpdateDate
                     fetchNoticeData()
                     step++;
