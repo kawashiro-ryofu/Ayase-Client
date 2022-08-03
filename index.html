@@ -116,30 +116,32 @@
         $('#remote-status-display').attr({'title': "连接状态: " + localNoticeCache.LSTAT.status})
       })
 
+    
+    function noDisturbIcon(showSnack = true){
+        let f = 'fa '
+        // Multi-Language Support Required
+        let t = '勿扰'
+        if(LocalSettings.settings.noDisturb.enable){
+          t += ': 开'
+          $('.naviobj.nodisturb i').removeClass()
+          $('.naviobj.nodisturb i').addClass(f + 'fa-bell-slash on')
+        }else{
+          t += ': 关'
+          $('.naviobj.nodisturb i').removeClass()
+          $('.naviobj.nodisturb i').addClass(f + 'fa-bell')
+        }
+        $('.naviobj.nodisturb').attr({'title': t})
+        if(showSnack)SnackBar({message: t, position: 'tr', status: 'success'})
+      }
       // 导航栏 勿扰 按钮
       setTimeout(function(){
-        function nodisturbIcon(showSnack = true){
-          let f = 'fa '
-          // Multi-Language Support Required
-          let t = '勿扰'
-          if(LocalSettings.settings.noDisturb.enable){
-            t += ': 开'
-            $('.naviobj.nodisturb i').removeClass()
-            $('.naviobj.nodisturb i').addClass(f + 'fa-bell-slash on')
-          }else{
-            t += ': 关'
-            $('.naviobj.nodisturb i').removeClass()
-            $('.naviobj.nodisturb i').addClass(f + 'fa-bell')
-          }
-          $('.naviobj.nodisturb').attr({'title': t})
-          if(showSnack)SnackBar({message: t, position: 'tr', status: 'success'})
-        }
+        
         $('.naviobj.nodisturb').on('click', ()=>{
           LocalSettings.settings.noDisturb.enable = !LocalSettings.settings.noDisturb.enable
-          nodisturbIcon()
+          noDisturbIcon()
           LocalSettings.save2fs()
         })
-        nodisturbIcon(false)
+        noDisturbIcon(false)
       })
     </script>
   </body>

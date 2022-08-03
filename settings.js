@@ -15,7 +15,11 @@ class LocalSettings{
                 token: null
             },
             noDisturb:{
-                enable: false
+                enable: false,
+                cron: {
+                    on: [],
+                    off: []
+                }
             },
             general: {
                 customTitle: "Ayase"

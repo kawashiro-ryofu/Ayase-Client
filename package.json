@@ -8,42 +8,50 @@
   },
   "author": "kawashiro-ryofu",
   "license": "MPL-2.0",
-  "bulid":{
-	"productName": "Ayase-Client",
-	"appId": "yay.bkryofu.whoIsCommunist.wrote.ayaseClient",
-	"copyright": "©2022 kawashiro-ryofu  & the Ayase developers. All Rights Reserved. Licensed Under MPL-2.0.",
-	"directories":{
-		"output": "dist"
-	},
-	"files": ["dist/electron/**/*"],
-	"nsis": {
-		"oneClick": false,
-		"allowElevation": true,
-		"allowToChangeInstallationDirectory": true,
-		"installerHeaderIcon": "./favicon.ico",
-		"createDesktopShortcut": false,
-		"createStartMenuShortcut": true,
-		"shortcutName": "Ayase Client"
-	},
-	"win": {
-		"icon": "./favicon.ico",
-		"target": [{
-			"target": "nsis",
-			"arch": ["ia32"]
-		}]
-	}
+  "bulid": {
+    "productName": "Ayase-Client",
+    "appId": "yay.bkryofu.whoIsCommunist.wrote.ayaseClient",
+    "copyright": "©2022 kawashiro-ryofu  & the Ayase developers. All Rights Reserved. Licensed Under MPL-2.0.",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "dist/electron/**/*"
+    ],
+    "nsis": {
+      "oneClick": false,
+      "allowElevation": true,
+      "allowToChangeInstallationDirectory": true,
+      "installerHeaderIcon": "./favicon.ico",
+      "createDesktopShortcut": false,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Ayase Client"
+    },
+    "win": {
+      "icon": "./favicon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "ia32"
+          ]
+        }
+      ]
+    }
   },
   "devDependencies": {
-    "electron": "^17.4.10",
     "electron-builder": "^23.1.0"
   },
   "dependencies": {
     "@electron/remote": "^2.0.8",
     "cron-parser": "^4.5.0",
+    "electron": "^19.0.10",
     "electron-log": "^4.4.8",
     "jquery": "^3.6.0",
+    "node-cron": "^3.0.1",
     "python-shell": "^3.0.1",
     "shelljs": "^0.8.5",
+    "uuid": "^8.3.2",
     "validator": "^13.7.0",
     "xss": "^1.0.13"
   }

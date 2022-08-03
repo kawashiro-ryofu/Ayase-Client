@@ -59,8 +59,6 @@ ipcMain.on('asynchronous-message', (event, arg) => {
     //  to-do 设置界面
     settings: function(){
 
-
-    /*async function(){
       if(!settingsLock){
         settingsLock = true
         const settingsWindow = new BrowserWindow({
@@ -78,14 +76,14 @@ ipcMain.on('asynchronous-message', (event, arg) => {
           },
         })
 
-        await settingsWindow.loadFile('settings.html')
+        settingsWindow.loadFile('settings.html')
         log.info('Started Settings Window')
 
         settingsWindow.on('closed',()=>{
           settingsLock = false
           log.info('Closed Settings Window')
-        })*/
-        
+        })
+      }
     },
     // 阅读器
     reader: function(args){

@@ -24,7 +24,7 @@ const xss = require('xss')
 const { useTemplate } = require('./templates.js')
 const log = require('electron-log')
 const { isUUID } = require('validator')
-//var uuidreg = /[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}/gi
+const cron = require('node-cron')
 
 // 主进程 IPC 通信 包装
 function toMainTask(command, argsjson){
@@ -94,6 +94,33 @@ function FormatDate(dateobj = new Date(), format = "%Y-%m-%d %a", DOW = ["SUN", 
 function delHtmlTag(str){
     return str.replace(/<[^>]+>/g,"");//去掉所有的html标记
 } 
+
+//  基于cron的计划勿扰
+function noDisturbCron(){
+    //      清楚此前的任务
+    //      定时·开
+    //LocalSettings.settings.noDisturb.cron.on.forEach(function(value, index){
+    for(var a = 0, on = LocalSettings.settings.noDisturb.cron.on; a < on.length; a++){
+        if(typeof(on[a]) != 'string'){
+                cron.schedule(on[a], ()=>{
+                LocalSettings.settings.noDisturb.enable = true
+                log.info('No-Disturb Cron: Planned to enable No-Disturb at '+ new Date().toJSON)
+                noDisturbIcon()
+            })
+        }
+    }
+    //})
+    //      定时·关
+    for(var a = 0, off = LocalSettings.settings.noDisturb.cron.off; a < off.length; a++){
+        if(typeof(off[a]) != 'string'){
+            cron.schedule(off[a], ()=>{
+                LocalSettings.settings.noDisturb.enable = true
+                log.info('No-Disturb Cron: Planned to disable No-Disturb at '+ new Date().toJSON)
+                noDisturbIcon()
+            })
+        }
+    }
+}
 
 //      通知：对象
 function Notice(title, content, publisher, level, pubDate, uuid, description = delHtmlTag(content)){
@@ -701,3 +728,6 @@ const notifTemplate = require('./templates.js').notifTemplate
 //  抓取通知列表
 GetDataFromRemote()
 
+setTimeout(()=>{
+    noDisturbCron()
+}, 2000)
