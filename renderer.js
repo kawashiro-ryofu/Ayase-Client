@@ -101,23 +101,23 @@ function noDisturbCron(){
     //      定时·开
     //LocalSettings.settings.noDisturb.cron.on.forEach(function(value, index){
     for(var a = 0, on = LocalSettings.settings.noDisturb.cron.on; a < on.length; a++){
-        if(typeof(on[a]) != 'string'){
-                cron.schedule(on[a], ()=>{
+        if(typeof(on[a]) == 'string'){
+            cron.schedule(on[a], ()=>{
                 LocalSettings.settings.noDisturb.enable = true
-                log.info('No-Disturb Cron: Planned to enable No-Disturb at '+ new Date().toJSON)
+                log.info('No-Disturb Cron: Planned to enable No-Disturb at '+ new Date().toJSON())
                 noDisturbIcon()
-            })
+            }).start()
         }
     }
     //})
     //      定时·关
     for(var a = 0, off = LocalSettings.settings.noDisturb.cron.off; a < off.length; a++){
-        if(typeof(off[a]) != 'string'){
+        if(typeof(off[a]) == 'string'){
             cron.schedule(off[a], ()=>{
-                LocalSettings.settings.noDisturb.enable = true
-                log.info('No-Disturb Cron: Planned to disable No-Disturb at '+ new Date().toJSON)
+                LocalSettings.settings.noDisturb.enable = false
+                log.info('No-Disturb Cron: Planned to disable No-Disturb at '+ new Date().toJSON())
                 noDisturbIcon()
-            })
+            }).start()
         }
     }
 }

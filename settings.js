@@ -27,6 +27,7 @@ class LocalSettings{
         }
     }
     loadFfs = function(){
+
         if(!fs.existsSync(this.file)){
             log.error(`Loading Configuration: Profile does not exist`)
             // To Do 配置引导
@@ -36,7 +37,26 @@ class LocalSettings{
             try{
                 var f = fs.readFileSync(this.file, {encoding: 'utf-8', flag: 'r'})
                 var outdat = JSON.parse(f.toString())
-                this.settings = outdat.settings
+
+                //  fixBUG: 配置文件隔代兼容问题
+                //this.settings = Object.assign(this.settings, outdat.settings)
+                this.settings = {
+                    connections: {
+                        serverURL: outdat.settings.connections.serverURL || this.settings.connections.serverURL,
+                        token: outdat.settings.connections.token || this.settings.connections.token
+                    },
+                    noDisturb:{
+                        enable: outdat.settings.noDisturb.enable || this.settings.noDisturb.enable,
+                        cron: {
+                            on: outdat.settings.noDisturb.cron.on || this.settings.noDisturb.cron.on,
+                            off: outdat.settings.noDisturb.cron.off || this.settings.noDisturb.cron.off
+                        }
+                    },
+                    general: {
+                        customTitle: outdat.settings.general.customTitle || this.settings.general.customTitle
+                    }
+                }
+
                 log.info(`Loaded Configuration`)
             }catch(err){
                 if(err){
