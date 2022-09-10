@@ -95,32 +95,7 @@ function delHtmlTag(str){
     return str.replace(/<[^>]+>/g,"");//去掉所有的html标记
 } 
 
-//  基于cron的计划勿扰
-function noDisturbCron(){
-    //      清楚此前的任务
-    //      定时·开
-    //LocalSettings.settings.noDisturb.cron.on.forEach(function(value, index){
-    for(var a = 0, on = LocalSettings.settings.noDisturb.cron.on; a < on.length; a++){
-        if(typeof(on[a]) == 'string'){
-            cron.schedule(on[a], ()=>{
-                LocalSettings.settings.noDisturb.enable = true
-                log.info('No-Disturb Cron: Planned to enable No-Disturb at '+ new Date().toJSON())
-                noDisturbIcon()
-            }).start()
-        }
-    }
-    //})
-    //      定时·关
-    for(var a = 0, off = LocalSettings.settings.noDisturb.cron.off; a < off.length; a++){
-        if(typeof(off[a]) == 'string'){
-            cron.schedule(off[a], ()=>{
-                LocalSettings.settings.noDisturb.enable = false
-                log.info('No-Disturb Cron: Planned to disable No-Disturb at '+ new Date().toJSON())
-                noDisturbIcon()
-            }).start()
-        }
-    }
-}
+
 
 //      通知：对象
 function Notice(title, content, publisher, level, pubDate, uuid, description = delHtmlTag(content)){
@@ -156,7 +131,7 @@ function Notice(title, content, publisher, level, pubDate, uuid, description = d
         }
         if(new Date().getTime() <= this.pubDate){
             log.error('Appending Notice: Timestamp fatal error. The publish date is later than current. It means that your local time is incorrect , or the server is from the future . ')
-            dialog.showMessageBox({title: "不正常的通知对象", message: `刚刚收到的通知(UUID: ${uuid}, 标题: ${title})发布时间晚于当前时间。\n这意味着本机的时间可能不正确，或者，这则通知来自未来。\n安全起见，此通知不会被展示。`, type: "error"})
+            dialog.showMessageBox({title: "“请校准时钟”", message: `刚刚收到的通知(UUID: ${uuid}, 标题: ${title})发布时间晚于当前时间。\n这意味着本机的时间可能不正确，或者，这则通知来自未来。\n安全起见，此通知不会被展示。`, type: "error"})
         }
         log.warn('Appending Notice: This notice will not append to the list. Please ensure that the server is TRUSTABLE, or contact the Network Administrator.')
         dialog.showMessageBox({title: "不正常的通知对象", message: `请联系通知服务器管理员。`, type: "warning"})
@@ -316,9 +291,67 @@ function FreshNoticeBar(){
     }, 100)
 }
 
+
+//  基于cron的计划勿扰
+function noDisturbCron(){
+    //      清楚此前的任务
+    //      定时·开
+    let returnWithErr = false
+    for(var a = 0, on = LocalSettings.settings.noDisturb.cron.on; a < on.length; a++){
+        if(typeof(on[a]) == 'string'){
+            try{
+                cron.schedule(on[a], ()=>{
+                    LocalSettings.settings.noDisturb.enable = true
+                    log.info('No-Disturb Cron: Planned to enable No-Disturb at '+ new Date().toJSON())
+                    noDisturbIcon()
+                }).start()
+            }catch(err){
+                var title = 'NoDistrub Schedule'
+                var content = title + ': '+ on[a] + ': ' +err
+                log.error(content)
+                dialog.showMessageBox({title: title, type: 'error', message: content})
+                //  存在不合法CRON语句，去除
+                on[a] = null
+                returnWithErr = true
+            }
+        }
+    }
+    //})
+    //      定时·关
+    for(var a = 0, off = LocalSettings.settings.noDisturb.cron.off; a < off.length; a++){
+        if(typeof(off[a]) == 'string'){
+            try{
+                cron.schedule(off[a], ()=>{
+                    LocalSettings.settings.noDisturb.enable = false
+                    log.info('No-Disturb Cron: Planned to disable No-Disturb at '+ new Date().toJSON())
+                    noDisturbIcon()
+                }).start()
+            }catch(err){
+                var title = 'NoDistrub Schedule'
+                var content = title + ': '+ off[a] + ': ' +err
+                log.error(content)
+                dialog.showMessageBox({title: title, type: 'error', message: content})
+                //  存在不合法CRON语句，去除
+                off[a] = null
+                returnWithErr = true
+            }
+        }
+    }
+    //  移除 去除不合法CRON语句的内容后 数组空项
+    if(returnWithErr || on.includes(null) || off.includes(null)){
+
+        on = on.filter(item=>item)
+        off = off.filter(item=>item)
+
+        log.warn('NoDistrub Schedule: Removed Invalid Expression')
+        LocalSettings.save2fs()
+    }
+    
+}
+
 // 服务器路由：
-//  /query/:token/LatestUpdateDate -> (json)最新发布时间 <UNIX时间戳>
-//  /query/:token/NoticesList -> (json)适用于本机的所有通知列表
+//  -请求-> /query/:token/LatestUpdateDate  -返回->     (json)最新发布时间 <UNIX时间戳>
+//  -请求-> /query/:token/NoticesList       -返回->     (json)适用于本机的所有通知列表
 
 //  抓取数据
 function GetDataFromRemote(){
@@ -666,7 +699,7 @@ var readAlready = {
                                 var title = 'Loading Cache readAlredy'
                                 var content = title + ': '+err
                                 log.error(content)
-                                dialog.error({title: "title", content: content})
+                                dialog.showMessageBox({title: title, type: 'error', message: content})
                             }
                         }
                     }
@@ -677,7 +710,7 @@ var readAlready = {
                     var title = 'Loading Cache readAlredy'
                     var content = title + ': '+err
                     log.error(content)
-                    dialog.showErrorBox({title: "title", content: content})
+                    dialog.showMessageBox({title: title, type: 'error', message: content})
                 }
             }
         }

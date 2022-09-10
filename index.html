@@ -146,15 +146,20 @@
         noDisturbIcon(false)
       })
 
-      setInterval(()=>{
-          LocalSettings.loadFfs()
-          if(
-            (LocalSettings.settings.noDisturb.enable ^ ($('.naviobj.nodisturb i').attr('enabled') == 'true')) ||
-            (!LocalSettings.settings.noDisturb.enable ^ ($('.naviobj.nodisturb i').attr('enabled') == 'false'))
-          ){
-            noDisturbIcon()
-          }
-      }, 1000)
+      setTimeout(()=>{
+        setInterval(()=>{
+            LocalSettings.loadFfs()
+            if(
+              (LocalSettings.settings.noDisturb.enable ^ ($('.naviobj.nodisturb i').attr('enabled') == 'true')) ||
+              (!LocalSettings.settings.noDisturb.enable ^ ($('.naviobj.nodisturb i').attr('enabled') == 'false'))
+            ){
+              noDisturbIcon()
+            }
+            if(
+              LocalSettings.settings.general.customTitle.length != 0 && 
+              $('h1.title').html() != LocalSettings.settings.general.customTitle)$('h1.title').html(LocalSettings.settings.general.customTitle)
+        }, 2500)
+      }, 5000)
     </script>
   </body>
 </html>
