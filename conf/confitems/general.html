@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="utf-8">
+    <link href="../frame.css" rel="stylesheet">
+    <script src="../../static/js/jquery/jquery.min.js"></script>
+</head>
+<body>
+    <h1>常规</h1>
+    <form>
+        自定义标题<br>
+        <input id="customTitle" type="text" name="customTitle" placeholder="I can eat glass, it doesn't hurt me."><br>
+    </form>
+    <script>
+        //  将原设置内容应用于文本框
+        var LocalSettings = parent.LocalSettings
+        $('#customTitle').attr('value', LocalSettings.settings.general.customTitle)
+
+        //  customTitle修改时的触发器
+        let cst = document.getElementById('customTitle')
+        cst.oninput=()=>{
+            LocalSettings.settings.general.customTitle = cst.value
+            LocalSettings.save2fs()
+        }
+
+    </script>
+</body>

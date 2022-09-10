@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="UTF-8">
+    <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
+    <!--<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'">-->
+    <link href="../styles.css" rel="stylesheet">
+    <link href='../static/css/font-awesome/css/font-awesome.min.css' rel="stylesheet">
+    <link href='../static/css/remixicon/fonts/remixicon.css' rel="stylesheet">
+    <title>设置</title>
+</head>
+<style>
+a.settings-itemlnk {
+    font-size: 4vh;
+    padding: 5px;
+    text-decoration: none;
+    transition: color .3s;
+}
+a.settings-itemlnk:hover {
+    color: #00CCFF;
+}
+#settings-sidebar li {
+    list-style-type: none;
+    padding-top: 20px;
+    padding-bottom: 2px;
+}
+#settings-item-frame {
+    position: absolute;
+    left: 25vh;
+    right: 5vh;
+    top: 3vh;
+    bottom: 3vh;
+    text-overflow: clip;
+    overflow: hidden;
+}
+#settings-item-frame iframe{
+    width: 99%;
+    height: 99%;
+    background: #00000000;
+    color: white;
+    border: 0px;
+}
+</style>
+<body>
+    <script>window.$ = window.jQuery = require("../static/js/jquery/jquery.js");</script>
+    <div id="settings-sidebar" style="display: none"><ul id="settings-item-list"></ul></div>
+    <div id="settings-item-frame">
+        <iframe id="sframe" src="welcome.html"></iframe>
+    </div>
+</body>
+<script>
+    //  依赖 引入
+    const {usrdir} = require('../usrdir.js')
+    const settings = require('../settings.js')
+    const path = require('path')
+    const fs = require('fs')
+    const log = require('electron-log')
+
+    //  侧栏项目·模板
+    const template = '<li><a class="settings-itemlnk" href="#" data="{{ itemName }}" onclick="SwitchTo(\'{{ itemName }}\')" title="{{ itemLabel }}"><i class="{{ itemIcon }}"></i>{{ itemLabel }}</a></li><br>'
+
+    //  设置类
+    var LocalSettings = new settings.LocalSettings(usrdir.settings)
+    LocalSettings.loadFfs()
+
+    //  读取配置列表
+    function LoadConfItems(){
+        $('#settings-sidebar').empty()
+        let confItemList = require('./conf.json').SettingsItemList
+        confItemList.forEach((val, index) => {
+            let iout = template
+            iout = iout.replaceAll('{{ itemName }}', val.itemName)
+            iout = iout.replaceAll('{{ itemLabel }}', val.itemLabel)
+            iout = iout.replaceAll('{{ itemIcon }}', val.itemIcon)
+            $('#settings-sidebar').append(iout)
+        });
+        $('#settings-sidebar').slideDown()
+    }
+
+    //  切页
+    function SwitchTo(itemName){
+        LocalSettings.loadFfs()
+        $('.settings-itemlnk').removeAttr('style')
+        $(`[data="${itemName}"]`).css('color', "white")
+        $('#sframe').fadeOut()
+        setTimeout(()=>{
+            let x = $('#sframe')
+            x.attr('src', `confitems/${itemName}.html`)
+            setTimeout(()=>{x.fadeIn()}, 100)
+        }, 500)
+    }
+
+
+
+    LoadConfItems()
+</script>

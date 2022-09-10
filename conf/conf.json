@@ -1,0 +1,24 @@
+{
+	"SettingsItemList": [
+		{
+			"itemName": "connections",
+			"itemLabel": "连接",
+			"itemIcon": "ri-reserved-fill"
+		},
+		{
+			"itemName": "notifications",
+			"itemLabel": "通知",
+			"itemIcon": "ri-notification-4-fill"
+		},
+		{
+			"itemName": "general",
+			"itemLabel": "常规",
+			"itemIcon": "ri-dashboard-fill"
+		},
+		{
+			"itemName": "about",
+			"itemLabel": "关于",
+			"itemIcon": "ri-information-fill"
+		}
+	]
+}

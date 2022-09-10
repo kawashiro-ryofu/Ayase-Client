@@ -1,0 +1,18 @@
+body{
+    color: white;
+    font-size: 3vh;
+}
+
+h1{
+    font-size: 6vh;
+}
+
+input[type="text"]{
+    height: 5vh;
+    width: 60%;
+    border: aqua 1px solid;
+    border-radius: 2vh;
+    margin: 12px;
+    font-size: 3vh;
+}
+

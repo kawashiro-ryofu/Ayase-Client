@@ -76,7 +76,7 @@ ipcMain.on('asynchronous-message', (event, arg) => {
           },
         })
 
-        settingsWindow.loadFile('settings.html')
+        settingsWindow.loadFile('conf/index.html')
         log.info('Started Settings Window')
 
         settingsWindow.on('closed',()=>{
@@ -171,11 +171,11 @@ function sideNBar (scrwidth, scrheight) {
 
   // and load the index.html of the app.
   mainWindow.loadFile('index.html')
-  mainWindow.webContents.closeDevTools()
+
   log.info(`Loaded Sidebar Window`)
   //mainWindow.setSkipTaskbar(true)
   // Open the DevTools.
-  mainWindow.webContents.openDevTools()
+  //mainWindow.webContents.openDevTools()
 
   require("@electron/remote/main").enable(mainWindow.webContents)
 

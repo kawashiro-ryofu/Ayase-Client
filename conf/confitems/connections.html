@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="utf-8">
+    <link href="../frame.css" rel="stylesheet">
+    <script src="../../static/js/jquery/jquery.min.js"></script>
+</head>
+<body>
+    <h1>连接</h1>
+    <form>
+        服务器URL:<br>
+        <input id="serverURL" type="text" name="服务器URL" placeholder="e.g. http(s)://hostname:port/"><br>
+        Token:<br>
+        <input id="token"  type="text" name="Token" placeholder="e.g. XXXXXXXXXXXXXXXX"><br>
+    </form>
+    <script>
+        //  将原设置内容应用于文本框
+        var LocalSettings = parent.LocalSettings
+        
+        $('#serverURL').attr('value', LocalSettings.settings.connections.serverURL)
+        $('#token').attr('value', LocalSettings.settings.connections.token)
+
+        //  serverURL修改时的触发器
+        let isu = document.getElementById('serverURL')
+        isu.oninput=()=>{
+            LocalSettings.settings.connections.serverURL = isu.value
+            LocalSettings.save2fs()
+
+        }
+
+        //  token修改时的触发器
+        let itk = document.getElementById('token')
+        itk.oninput=()=>{
+            LocalSettings.settings.connections.token = itk.value
+            LocalSettings.save2fs()
+        }
+
+    </script>
+</body>

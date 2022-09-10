@@ -42,22 +42,20 @@ class LocalSettings{
                 //this.settings = Object.assign(this.settings, outdat.settings)
                 this.settings = {
                     connections: {
-                        serverURL: outdat.settings.connections.serverURL || this.settings.connections.serverURL,
-                        token: outdat.settings.connections.token || this.settings.connections.token
+                        serverURL: outdat.settings.connections.serverURL ?? this.settings.connections.serverURL,
+                        token: outdat.settings.connections.token ?? this.settings.connections.token
                     },
                     noDisturb:{
-                        enable: outdat.settings.noDisturb.enable || this.settings.noDisturb.enable,
+                        enable: outdat.settings.noDisturb.enable ?? this.settings.noDisturb.enable,
                         cron: {
-                            on: outdat.settings.noDisturb.cron.on || this.settings.noDisturb.cron.on,
-                            off: outdat.settings.noDisturb.cron.off || this.settings.noDisturb.cron.off
+                            on: outdat.settings.noDisturb.cron.on ?? this.settings.noDisturb.cron.on,
+                            off: outdat.settings.noDisturb.cron.off ?? this.settings.noDisturb.cron.off
                         }
                     },
                     general: {
-                        customTitle: outdat.settings.general.customTitle || this.settings.general.customTitle
+                        customTitle: outdat.settings.general.customTitle ?? this.settings.general.customTitle
                     }
                 }
-
-                log.info(`Loaded Configuration`)
             }catch(err){
                 if(err){
                     log.error('Loading Configuration: '+err)
@@ -72,7 +70,7 @@ class LocalSettings{
             fs.mkdirSync(path.parse(this.file).dir)
             this.save2fs()
         }else{
-            //  此处感谢Simon的建议
+            //  此处感谢来自simonShiki的建议
             fs.writeFile(this.file, 
                 JSON.stringify({settings: this.settings}, null, 4),        
                 'utf-8',

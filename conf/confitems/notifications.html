@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="utf-8">
+    <link href="../frame.css" rel="stylesheet">
+    <script src="../../static/js/jquery/jquery.min.js"></script>
+</head>
+<body>
+    <h1>通知</h1>
+    <form>
+        <input id="noDisturb" type="checkbox" name="勿扰" >勿扰<br><br>
+    </form>
+    <div>
+
+    </div>
+    <script>
+        //  将原设置内容应用于文本框
+        var LocalSettings = parent.LocalSettings
+        $("#noDisturb").attr('checked', LocalSettings.settings.noDisturb.enable)
+
+
+        let nde = document.getElementById('noDisturb')
+        nde.oninput=()=>{
+            console.log($("#noDisturb").prop('checked'))
+            LocalSettings.settings.noDisturb.enable = $("#noDisturb").prop('checked')
+            LocalSettings.save2fs()
+        }
+        /*
+        let nde = document.getElementById('noDisturb')
+        nde.oninput=()=>{
+            LocalSettings.settings.noDisturb.enable = nde.value
+            LocalSettings.save2fs()
+        }
+        
+        $('#serverURL').attr('value', LocalSettings.settings.connections.serverURL)
+        $('#token').attr('value', LocalSettings.settings.connections.token)
+
+        //  serverURL修改时的触发器
+        let isu = document.getElementById('serverURL')
+        isu.oninput=()=>{
+            LocalSettings.settings.connections.serverURL = isu.value
+            LocalSettings.save2fs()
+
+        }
+
+        //  token修改时的触发器
+        let itk = document.getElementById('token')
+        itk.oninput=()=>{
+            LocalSettings.settings.connections.token = itk.value
+            LocalSettings.save2fs()
+        }
+*/
+    </script>
+</body>
