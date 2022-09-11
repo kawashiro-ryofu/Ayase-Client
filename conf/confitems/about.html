@@ -7,7 +7,8 @@
 <body>
     <style>
 		body{
-			background: black
+			background: black;
+
 		}
         #paint-wrapper{
 			overflow-x: hidden;
@@ -43,9 +44,10 @@
 			height: 512px;
 			top: 14vh;
 			bottom: 25vh;
-			background: linear-gradient(yellow, #df29a1, #df29a1, black, black);
+			background: linear-gradient(yellow, orange, #df29a1, #721d55);
 			margin: auto;
 			border-radius: 50%;
+			box-shadow: 0px 0px 100px 0px #df29a1;
 
         }
         #content-wrapper{
@@ -64,11 +66,23 @@
 			text-indent: 3vh;
 			font-size: 16px;
 		}
+		#dengxiaoao img{
+			position: absolute;
+			width: 20%;
+			bottom: 17vh;
+			margin: auto;
+			left: 25vh;
+			right: 25vh;
+			filter: brightness(0.1) drop-shadow(0vh -3vh 25px white);
+		}
     </style>
     <div id="paint-wrapper">
 		<canvas id="retroBackground" height="1080" width="1920"></canvas>
 		<div id="retroSun">
 			<div></div>
+		</div>
+		<div id="dengxiaoao">
+			<img src="STAFF.webp">
 		</div>
     </div>
     <div id="content-wrapper">
@@ -76,7 +90,7 @@
 		<span class='pname'>Ayase</span>
 		<span class='pver' id="ver"></span>
 		<span class='pright' id="cr">&copy; 2022 kawashiro-ryofu & the Ayase developers. </span>
-		<span>保留部分权力，遵循<a id='lic' href="" onclick="To('../../LICENSE')">MPL-2.0</a>许可证发布。</span><br>
+		<span>保留部分权利，遵循<a id='lic' href="" onclick="To('../../LICENSE')">MPL-2.0</a>许可证发布。</span><br>
 		<span><a href="#" onclick="ToGithub()">Github项目页</a></span>
 		
     </div>
@@ -89,6 +103,7 @@
     var rtb = document.getElementById('retroBackground'); 
     var rtbc = rtb.getContext('2d') 
     rtbc.strokeStyle = 'aqua'
+	rtbc.lineWidth=5
     
     //	横线
     rtbc.moveTo(0, 0)

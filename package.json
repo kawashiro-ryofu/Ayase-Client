@@ -9,8 +9,8 @@
   "author": "kawashiro-ryofu",
   "license": "MPL-2.0",
   "bulid": {
-    "productName": "Ayase-Client",
-    "appId": "yay.bkryofu.whoIsCommunist.wrote.ayaseClient",
+    "productName": "Ayase",
+    "appId": "yay.bkryofu.whoIsCommunist.wrote.ayase",
     "copyright": "©2022 kawashiro-ryofu  & the Ayase developers. Some Rights Reserved. Licensed Under MPL-2.0.",
     "directories": {
       "output": "dist"

@@ -1,6 +1,7 @@
 body{
     color: white;
     font-size: 3vh;
+    user-select: none;
 }
 
 h1{
