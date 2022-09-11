@@ -40,12 +40,12 @@
     }
   },
   "devDependencies": {
-    "electron-builder": "^23.1.0"
+    "electron-builder": "^23.1.0",
+    "electron": "^19.0.10"
   },
   "dependencies": {
     "@electron/remote": "^2.0.8",
     "cron-parser": "^4.5.0",
-    "electron": "^19.0.10",
     "electron-log": "^4.4.8",
     "jquery": "^3.6.0",
     "node-cron": "^3.0.1",
