@@ -1,6 +1,6 @@
 {
   "name": "Ayase-Client",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Client of Ayase group notice system",
   "main": "main.js",
   "scripts": {
@@ -11,7 +11,7 @@
   "bulid": {
     "productName": "Ayase-Client",
     "appId": "yay.bkryofu.whoIsCommunist.wrote.ayaseClient",
-    "copyright": "©2022 kawashiro-ryofu  & the Ayase developers. All Rights Reserved. Licensed Under MPL-2.0.",
+    "copyright": "©2022 kawashiro-ryofu  & the Ayase developers. Some Rights Reserved. Licensed Under MPL-2.0.",
     "directories": {
       "output": "dist"
     },

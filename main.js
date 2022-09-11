@@ -180,6 +180,7 @@ function sideNBar (scrwidth, scrheight) {
   require("@electron/remote/main").enable(mainWindow.webContents)
 
   // 崩溃处理
+  //	（有待完善）
   mainWindow.webContents.on('crash', function(){
     // 
     const options = {
@@ -225,18 +226,6 @@ app.on('will-quit', function(){
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
 
-/*
-setTimeout(function(){
-  setInterval(()=>{
-    // 删除临时文件
-
-    shell.ls().forEach(function(currentValue, index){
-      if(/\d.tmp.html/.test(currentValue) == true)shell.rm('./*.tmp.html')
-    })
-
-  }, 10000)
-}, 10000)*/
-
 process.on('uncaughtException', async function(error){
   var title = 'Unexpected Error Occurred'
   var content = title + `: ${error.toString()}`
@@ -246,10 +235,3 @@ process.on('uncaughtException', async function(error){
     content: content
   })
 })
-
-// 全局异常处理测试
-/*
-setTimeout(()=>{
-  throw 'Error Test';
-},10000)
-*/

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="utf-8">
+    <link href="../frame.css" rel="stylesheet">
+    <script src="../../static/js/jquery/jquery.min.js"></script>
+</head>
+<body>
+    <style>
+		body{
+			background: black
+		}
+        #paint-wrapper{
+			overflow-x: hidden;
+			overflow-y: hidden;
+			position: absolute;
+			top: 0px;
+			bottom: 0px;
+			left: 0px;
+			right: 0px;
+			z-index: -1;
+			opacity: 0.5
+        }
+        #retroBackground{
+			width: 100%;
+			position: absolute;
+			top: 75vh;
+			z-index: -2;
+			background-color:black
+        }
+        #retroSun{
+			position: absolute;
+			top: 80px;
+			bottom: -45vh;
+			width: 100%;
+			height: 100%;
+			background: #03030d;
+			z-index: -3;
+			
+        }
+        #retroSun div{
+			position: relative;
+			width: 512px;
+			height: 512px;
+			top: 14vh;
+			bottom: 25vh;
+			background: linear-gradient(yellow, #df29a1, #df29a1, black, black);
+			margin: auto;
+			border-radius: 50%;
+
+        }
+        #content-wrapper{
+			position: absolute;
+			z-index: 10;
+			left: 25vh
+        }
+		.pname{
+			font-size: 32px;
+		}
+		.pver{
+			font-size: 24px;
+		}
+		span{
+			display: block;
+			text-indent: 3vh;
+			font-size: 16px;
+		}
+    </style>
+    <div id="paint-wrapper">
+		<canvas id="retroBackground" height="1080" width="1920"></canvas>
+		<div id="retroSun">
+			<div></div>
+		</div>
+    </div>
+    <div id="content-wrapper">
+		<h1>关于</h1>
+		<span class='pname'>Ayase</span>
+		<span class='pver' id="ver"></span>
+		<span class='pright' id="cr">&copy; 2022 kawashiro-ryofu & the Ayase developers. </span>
+		<span>保留部分权力，遵循<a id='lic' href="" onclick="To('../../LICENSE')">MPL-2.0</a>许可证发布。</span><br>
+		<span><a href="#" onclick="ToGithub()">Github项目页</a></span>
+		
+    </div>
+    <script>
+	$('#ver').html(`v${ parent.verinfo.version }`)
+	$('#lic').html(`${ parent.verinfo.license }`)
+    
+    //	画布大小：(1920, 1080)
+    var rtbsize = [1920, 1080]
+    var rtb = document.getElementById('retroBackground'); 
+    var rtbc = rtb.getContext('2d') 
+    rtbc.strokeStyle = 'aqua'
+    
+    //	横线
+    rtbc.moveTo(0, 0)
+	rtbc.lineTo(rtbsize[0], 0)
+	rtbc.moveTo(0, 0)
+	rtbc.lineTo(rtbsize[0], 0)
+    function g(x){return (x**2)*2-3}
+    for(var a = 0; a < 10; a++){
+		rtbc.moveTo(0, g(a)*2) 
+		rtbc.lineTo(rtbsize[0], g(a)*2)
+    }
+    
+    //	斜线
+    //	x的单位为角度
+    function b(x){return Math.round(Math.tan(x*(Math.PI/180))*50)}
+    function c(x){return b(-(x**2))*25}
+    function d(x){return b(-(x**2))*50}
+    
+    //	灭点为O
+    var O = [rtbsize[0]/2, 0]
+
+    for(var a = 2; a < 10 ; a++){
+        rtbc.moveTo(rtbsize[0]/2 - c(a), 0)
+		rtbc.lineTo(rtbsize[0]/2 - d(a), 400)
+		
+		rtbc.moveTo(rtbsize[0]/2 + c(a), 0)
+		rtbc.lineTo(rtbsize[0]/2 + d(a), 400)
+
+	}
+
+    rtbc.stroke()
+    
+    //	打开特定页面
+    function To(path){
+		window.open(path, '_blank', 'autoHideMenuBar=true,icon="../favicon.ico",title=Mozilla Public License Version 2.0')
+    }
+    
+    var toMainTask = parent.toMainTask
+
+	//	访问Github仓库
+	function ToGithub(){toMainTask('run', JSON.stringify({'cmd': 'https://github.com/kawashiro-ryofu/Ayase-Client'}))}
+
+    </script>
+</body>

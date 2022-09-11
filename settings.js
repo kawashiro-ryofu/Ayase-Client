@@ -22,7 +22,8 @@ class LocalSettings{
                 }
             },
             general: {
-                customTitle: "Ayase"
+                customTitle: "Ayase",
+                custonNotifyRingtonePath: "",
             }
         }
     }
@@ -53,7 +54,8 @@ class LocalSettings{
                         }
                     },
                     general: {
-                        customTitle: outdat.settings.general.customTitle ?? this.settings.general.customTitle
+                        customTitle: outdat.settings.general.customTitle ?? this.settings.general.customTitle,
+                        custonNotifyRingtonePath: outdat.settings.general.custonNotifyRingtonePath ?? this.settings.general.custonNotifyRingtonePath,
                     }
                 }
             }catch(err){

@@ -272,15 +272,17 @@ function FreshNoticeBar(){
                         log.info(`Sent Notification: ${currentValue.uuid} `)
                     }else log.warn('Sending Notification: Banned by no-disturb in settings')
                 }
+                var rt = ""
+                LocalSettings.settings.general.custonNotifyRingtonePath.length?rt=LocalSettings.settings.general.custonNotifyRingtonePath:rt="audios/CQCQ.mp3"
                 switch(currentValue.level){
                     case 'C':
                         addNotification()
                         break;
                     case 'B':
-                        addNotification('audios/CQ.mp3')
+                        addNotification(rt)
                         break;
                     case 'A': 
-                        addNotification('audios/CQ.mp3', true)
+                        addNotification(rt, true)
                         currentValue.Read()
                         $('#main-list li [id="' + currentValue.id +'"]').removeClass('unread')
                         break;
@@ -483,7 +485,7 @@ function GetDataFromRemote(){
                 localNoticeCache.LatestUpdateTime = parseInt(localNoticeCache.LatestUpdateTime)
                 data.LatestUpdateDate = parseInt(data.LatestUpdateDate)
                 if(localNoticeCache.LatestUpdateTime < data.LatestUpdateDate){
-                    console.log(localNoticeCache.LatestUpdateTime, data.LatestUpdateDate)
+                    //console.log(localNoticeCache.LatestUpdateTime, data.LatestUpdateDate)
                     localNoticeCache.LatestUpdateTime = data.LatestUpdateDate
                     fetchNoticeData()
                     step++;
